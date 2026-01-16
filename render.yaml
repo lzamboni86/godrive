@@ -1,0 +1,23 @@
+services:
+  # API Web Service
+  - type: web
+    name: godrive-backend
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm run prod
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: MERCADO_PAGO_ACCESS_TOKEN
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://godrive-backend.onrender.com
+      - key: BACKEND_URL
+        value: https://godrive-backend.onrender.com
+    healthCheckPath: /health
+    autoDeploy: false
+    domains:
+      - godrive-backend.onrender.com

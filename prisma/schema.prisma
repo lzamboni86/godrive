@@ -1,0 +1,167 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNDISCLOSED
+}
+
+enum LicenseCategory {
+  A
+  B
+  C
+}
+
+enum VehicleType {
+  MANUAL
+  AUTOMATIC
+  ELECTRIC
+  COMBUSTION
+}
+
+enum LessonStatus {
+  REQUESTED
+  PENDING_PAYMENT
+  PAID
+  WAITING_APPROVAL
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  HELD
+  RELEASED
+  REFUNDED
+}
+
+enum InstructorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  name         String?
+  phone        String?
+
+  instructor Instructor?
+
+  studentLessons Lesson[] @relation("LessonStudent")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Instructor {
+  id                String            @id @default(cuid())
+  userId            String            @unique
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  gender            Gender
+  licenseCategories LicenseCategory[]
+  status            InstructorStatus   @default(PENDING)
+  hourlyRate        Float              @default(80.0)
+  pixKey            String?
+
+  vehicles Vehicle[]
+  lessons  Lesson[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vehicle {
+  id           String     @id @default(cuid())
+  instructorId String
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  type VehicleType
+
+  make  String?
+  model String?
+  year  Int?
+  plate String?
+
+  lessons Lesson[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([instructorId])
+}
+
+model Lesson {
+  id String @id @default(cuid())
+
+  studentId String
+  student   User   @relation("LessonStudent", fields: [studentId], references: [id], onDelete: Restrict)
+
+  instructorId String
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Restrict)
+
+  vehicleId String?
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+
+  status LessonStatus @default(REQUESTED)
+
+  lessonDate DateTime @db.Date
+  lessonTime DateTime @db.Time(0)
+
+  payment Payment?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([instructorId])
+  @@index([vehicleId])
+  @@index([status])
+}
+
+model Payment {
+  id String @id @default(cuid())
+
+  lessonId String @unique
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  status PaymentStatus @default(HELD)
+
+  amount   Decimal @db.Decimal(10, 2)
+  currency String  @default("BRL")
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  releasedAt DateTime?
+  refundedAt DateTime?
+
+  @@index([status])
+}
