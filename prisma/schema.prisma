@@ -48,15 +48,14 @@ enum LessonStatus {
   CONFIRMED
   IN_PROGRESS
   COMPLETED
+  EVALUATED
+  PAYOUT_PAID
   CANCELLED
 }
 
-enum PaymentStatus {
+enum PayoutStatus {
   PENDING
   PAID
-  HELD
-  RELEASED
-  REFUNDED
 }
 
 enum InstructorStatus {
@@ -76,6 +75,8 @@ model User {
   instructor Instructor?
 
   studentLessons Lesson[] @relation("LessonStudent")
+  sentMessages  Message[] @relation("MessageSender")
+  studentReviews Review[] @relation("ReviewStudent")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -91,9 +92,12 @@ model Instructor {
   status            InstructorStatus   @default(PENDING)
   hourlyRate        Float              @default(80.0)
   pixKey            String?
+  averageRating     Float?             @default(0.0)
+  totalReviews      Int?               @default(0)
 
   vehicles Vehicle[]
   lessons  Lesson[]
+  reviews  Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -136,7 +140,12 @@ model Lesson {
   lessonDate DateTime @db.Date
   lessonTime DateTime @db.Time(0)
 
+  payoutStatus PayoutStatus @default(PENDING)
+  receiptUrl   String?
+
   payment Payment?
+  chat    Chat?
+  reviews Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -145,6 +154,15 @@ model Lesson {
   @@index([instructorId])
   @@index([vehicleId])
   @@index([status])
+  @@index([payoutStatus])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  HELD
+  RELEASED
+  REFUNDED
 }
 
 model Payment {
@@ -164,4 +182,61 @@ model Payment {
   refundedAt DateTime?
 
   @@index([status])
+}
+
+model Chat {
+  id String @id @default(cuid())
+
+  lessonId String @unique
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([lessonId])
+}
+
+model Message {
+  id String @id @default(cuid())
+
+  chatId String
+  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  senderId String
+  sender   User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+
+  content String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([chatId])
+  @@index([senderId])
+}
+
+model Review {
+  id String @id @default(cuid())
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation("ReviewStudent", fields: [studentId], references: [id], onDelete: Restrict)
+
+  instructorId String
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Restrict)
+
+  rating Int @db.SmallInt
+  comment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([lessonId, studentId])
+  @@index([lessonId])
+  @@index([studentId])
+  @@index([instructorId])
+  @@index([rating])
 }
