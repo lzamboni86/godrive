@@ -22,9 +22,9 @@ export class StudentController {
       state,
       city,
       neighborhoodTeach,
-      gender,
-      transmission,
-      engineType,
+      gender: gender as 'MALE' | 'FEMALE' | 'OTHER' | 'UNDISCLOSED' | undefined,
+      transmission: transmission as 'MANUAL' | 'AUTOMATIC' | undefined,
+      engineType: engineType as 'COMBUSTION' | 'ELECTRIC' | undefined,
     });
   }
 
