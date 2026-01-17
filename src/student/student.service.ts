@@ -114,7 +114,7 @@ export class StudentService {
           gte: now
         },
         status: {
-          in: ['CONFIRMED', 'REQUESTED']
+          in: ['PENDING_PAYMENT', 'WAITING_APPROVAL', 'CONFIRMED', 'REQUESTED']
         }
       },
       include: {
@@ -214,8 +214,12 @@ export class StudentService {
       studentId,
       lessonId: lesson.id,
       amount: lesson.payment?.amount.toNumber() || 80,
-      status: lesson.payment?.status === 'RELEASED' ? 'PAID' : 
-              lesson.payment?.status === 'HELD' ? 'PENDING' : 'CANCELLED',
+      status:
+        lesson.payment?.status === 'PAID' || lesson.payment?.status === 'RELEASED'
+          ? 'PAID'
+          : lesson.payment?.status === 'PENDING' || lesson.payment?.status === 'HELD'
+            ? 'PENDING'
+            : 'CANCELLED',
       paymentDate: lesson.payment?.releasedAt?.toISOString() || null,
       description: `Aula Prática #${lesson.id}`,
       createdAt: lesson.createdAt.toISOString()
@@ -303,11 +307,11 @@ export class StudentService {
                 instructorId: instructor.id, // ID correto do Instructor
                 lessonDate: lessonDate,
                 lessonTime: lessonDate,
-                status: 'REQUESTED', // Status fixo para compatibilidade com schema
+                status: 'PENDING_PAYMENT',
                 payment: {
                   create: {
                     amount: lesson.price,
-                    status: 'HELD',
+                    status: 'PENDING',
                     currency: 'BRL'
                   }
                 }
@@ -330,9 +334,12 @@ export class StudentService {
           where: { id: scheduleRequest.studentId }
         });
 
+        const lessonIds = lessons.map((l) => l.id);
+
         // Usar hourlyRate do instrutor para todos os items
         const paymentData = {
-          externalReference: lessons[0].id,
+          externalReference: lessonIds.join(','),
+          lessonIds,
           payerEmail: student?.email || 'test_user@test.com',
           payerName: student?.name || 'Aluno GoDrive',
           payerDocument: '00000000000',
@@ -359,6 +366,7 @@ export class StudentService {
 
         return {
           id: lessons[0].id,
+          lessonIds,
           preferenceId: mercadoPagoResponse.preferenceId,
           initPoint: mercadoPagoResponse.initPoint,
           sandboxInitPoint: mercadoPagoResponse.sandboxInitPoint,

@@ -71,6 +71,7 @@ export class MercadoPagoService {
 
       const backendUrl = process.env.BACKEND_URL;
       const frontendUrl = process.env.FRONTEND_URL;
+      const returnBaseUrl = frontendUrl || backendUrl;
 
       // Payload completo para o Mercado Pago
       const preferenceBody: any = {
@@ -87,11 +88,11 @@ export class MercadoPagoService {
         preferenceBody.notification_url = `${backendUrl}/webhooks/mercadopago`;
       }
 
-      if (frontendUrl) {
+      if (returnBaseUrl) {
         preferenceBody.back_urls = {
-          success: `${frontendUrl}/schedule/success`,
-          failure: `${frontendUrl}/schedule/failure`,
-          pending: `${frontendUrl}/schedule/pending`,
+          success: `${returnBaseUrl}/schedule/success`,
+          failure: `${returnBaseUrl}/schedule/failure`,
+          pending: `${returnBaseUrl}/schedule/pending`,
         };
       }
 
