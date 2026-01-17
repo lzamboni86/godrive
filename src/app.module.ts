@@ -11,9 +11,12 @@ import { PaymentModule } from './payment/payment.module';
 import { InstructorModule } from './instructor/instructor.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { HealthController } from './health/health.controller';
+import { ChatModule } from './chat/chat.module';
+import { ReviewModule } from './reviews/review.module';
+import { FinanceModule } from './finance/finance.module';
 
 @Module({
-  imports: [PrismaModule, PaymentsModule, AuthModule, LessonsModule, AdminModule, StudentModule, PaymentModule, InstructorModule, WebhooksModule],
+  imports: [PrismaModule, PaymentsModule, AuthModule, LessonsModule, AdminModule, StudentModule, PaymentModule, InstructorModule, WebhooksModule, ChatModule, ReviewModule, FinanceModule],
   controllers: [AppController, HealthController],
   providers: [AppService],
 })

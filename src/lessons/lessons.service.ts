@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ChatService } from '../chat/chat.service';
 
 @Injectable()
 export class LessonsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private chatService: ChatService,
+  ) {}
 
   async findByInstructor(instructorId: string) {
     return this.prisma.lesson.findMany({
@@ -69,7 +73,7 @@ export class LessonsService {
   }
 
   async updateStatus(id: string, status: string) {
-    return this.prisma.lesson.update({
+    const lesson = await this.prisma.lesson.update({
       where: { id },
       data: { status: status as any },
       include: {
@@ -78,5 +82,12 @@ export class LessonsService {
         vehicle: true,
       },
     });
+
+    // Se o instrutor aceitou a aula (mudou para CONFIRMED), criar chat
+    if (status === 'CONFIRMED') {
+      await this.chatService.createChat(id);
+    }
+
+    return lesson;
   }
 }
