@@ -28,7 +28,7 @@ export class ChatController {
 
   @Get('lesson/:lessonId')
   async getChatByLesson(@Param('lessonId') lessonId: string, @Request() req) {
-    return this.chatService.getChatByLesson(lessonId);
+    return this.chatService.getChatByLesson(lessonId, req.user.id);
   }
 
   @Get(':chatId/can-send')

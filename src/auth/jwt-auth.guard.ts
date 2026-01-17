@@ -1,10 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class JwtAuthGuard {
-  canActivate() {
-    // Por enquanto, permite tudo (sem autenticação)
-    // Futuro: implementar verificação JWT real
-    return true;
-  }
-}
+export class JwtAuthGuard extends AuthGuard('jwt') {}
