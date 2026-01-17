@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { StudentService } from './student.service';
 import { ContactForm } from './dto/contact-form.dto';
@@ -10,8 +10,22 @@ export class StudentController {
   constructor(private readonly studentService: StudentService) {}
 
   @Get('instructors/approved')
-  async getApprovedInstructors() {
-    return this.studentService.getApprovedInstructors();
+  async getApprovedInstructors(
+    @Query('state') state?: string,
+    @Query('city') city?: string,
+    @Query('neighborhoodTeach') neighborhoodTeach?: string,
+    @Query('gender') gender?: string,
+    @Query('transmission') transmission?: string,
+    @Query('engineType') engineType?: string,
+  ) {
+    return this.studentService.getApprovedInstructors({
+      state,
+      city,
+      neighborhoodTeach,
+      gender,
+      transmission,
+      engineType,
+    });
   }
 
   @Get('lessons/student/:id')

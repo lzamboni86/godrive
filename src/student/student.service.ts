@@ -11,13 +11,29 @@ export class StudentService {
     private mercadoPagoService: MercadoPagoService
   ) {}
 
-  async getApprovedInstructors() {
+  async getApprovedInstructors(filters?: {
+    state?: string;
+    city?: string;
+    neighborhoodTeach?: string;
+    gender?: string;
+    transmission?: string;
+    engineType?: string;
+  }) {
+    const instructorWhere: any = {
+      status: 'APPROVED',
+    };
+
+    if (filters?.state) instructorWhere.state = filters.state;
+    if (filters?.city) instructorWhere.city = filters.city;
+    if (filters?.neighborhoodTeach) instructorWhere.neighborhoodTeach = filters.neighborhoodTeach;
+    if (filters?.gender) instructorWhere.gender = filters.gender;
+    if (filters?.transmission) instructorWhere.transmission = filters.transmission;
+    if (filters?.engineType) instructorWhere.engineType = filters.engineType;
+
     const instructors = await this.prisma.user.findMany({
       where: {
         role: 'INSTRUCTOR',
-        instructor: {
-          status: 'APPROVED'
-        }
+        instructor: instructorWhere
       },
       include: {
         instructor: {
@@ -30,13 +46,24 @@ export class StudentService {
 
     return instructors.map(instructor => ({
       id: instructor.id,
-      name: instructor.email.split('@')[0],
+      name: instructor.name || instructor.email.split('@')[0],
       email: instructor.email,
-      phone: null, // Campo não existe no schema
+      phone: instructor.phone,
       status: instructor.instructor?.status || 'PENDING',
       vehicle: instructor.instructor?.vehicles?.[0] || null,
       cnh: instructor.instructor?.licenseCategories?.join(', ') || null,
       hourlyRate: instructor.instructor?.hourlyRate || 80.0,
+      vehicleMake: (instructor.instructor as any)?.vehicleMake,
+      vehicleYear: (instructor.instructor as any)?.vehicleYear,
+      transmission: (instructor.instructor as any)?.transmission,
+      engineType: (instructor.instructor as any)?.engineType,
+      state: (instructor.instructor as any)?.state,
+      city: (instructor.instructor as any)?.city,
+      neighborhoodReside: (instructor.instructor as any)?.neighborhoodReside,
+      neighborhoodTeach: (instructor.instructor as any)?.neighborhoodTeach,
+      gender: (instructor.instructor as any)?.gender,
+      completedLessonsCount: (instructor.instructor as any)?.completedLessonsCount,
+      rating: (instructor.instructor as any)?.rating ?? (instructor.instructor as any)?.averageRating,
       createdAt: instructor.createdAt.toISOString()
     }));
   }

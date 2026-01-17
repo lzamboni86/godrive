@@ -99,6 +99,7 @@ export class ReviewService {
       where: { id: instructorId },
       data: {
         averageRating: averageRating,
+        rating: averageRating,
         totalReviews: reviews.length,
       },
     });

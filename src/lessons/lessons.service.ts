@@ -9,6 +9,24 @@ export class LessonsService {
     private chatService: ChatService,
   ) {}
 
+  private async syncInstructorCompletedLessonsCount(instructorId: string) {
+    const completedCount = await this.prisma.lesson.count({
+      where: {
+        instructorId,
+        status: {
+          in: ['COMPLETED', 'EVALUATED', 'PAYOUT_PAID'],
+        },
+      },
+    });
+
+    await this.prisma.instructor.update({
+      where: { id: instructorId },
+      data: {
+        completedLessonsCount: completedCount,
+      },
+    });
+  }
+
   async findByInstructor(instructorId: string) {
     return this.prisma.lesson.findMany({
       where: {
@@ -86,6 +104,10 @@ export class LessonsService {
     // Se o instrutor aceitou a aula (mudou para CONFIRMED), criar chat
     if (status === 'CONFIRMED') {
       await this.chatService.createChat(id);
+    }
+
+    if (status === 'COMPLETED' || status === 'EVALUATED' || status === 'PAYOUT_PAID') {
+      await this.syncInstructorCompletedLessonsCount(lesson.instructorId);
     }
 
     return lesson;

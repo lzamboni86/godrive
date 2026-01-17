@@ -119,15 +119,25 @@ export class AuthService {
         email: dto.email,
         passwordHash: hashedPassword,
         role: 'INSTRUCTOR',
+        name: dto.name,
+        phone: dto.phone,
       },
     });
 
     const instructor = await this.prisma.instructor.create({
       data: {
         userId: user.id,
-        gender: 'UNDISCLOSED',
+        gender: (dto.gender as any) || 'UNDISCLOSED',
         licenseCategories: ['B'],
         hourlyRate: dto.hourlyRate || 80.0, // Usa valor informado ou padrão
+        vehicleMake: dto.vehicleMake || (dto.vehicleModel ? dto.vehicleModel.split(' ')[0] : null),
+        vehicleYear: dto.vehicleYear,
+        transmission: (dto.transmission as any) || 'MANUAL',
+        engineType: (dto.engineType as any) || 'COMBUSTION',
+        state: dto.state,
+        city: dto.city,
+        neighborhoodReside: dto.neighborhoodReside,
+        neighborhoodTeach: dto.neighborhoodTeach,
       },
     });
 
@@ -135,8 +145,9 @@ export class AuthService {
       data: {
         instructorId: instructor.id,
         type: 'MANUAL',
-        make: dto.vehicleModel.split(' ')[0],
+        make: dto.vehicleMake || (dto.vehicleModel ? dto.vehicleModel.split(' ')[0] : null),
         model: dto.vehicleModel,
+        year: dto.vehicleYear,
         plate: dto.vehiclePlate,
       },
     });

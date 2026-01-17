@@ -40,6 +40,16 @@ enum VehicleType {
   COMBUSTION
 }
 
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+}
+
+enum EngineType {
+  COMBUSTION
+  ELECTRIC
+}
+
 enum LessonStatus {
   REQUESTED
   PENDING_PAYMENT
@@ -94,6 +104,19 @@ model Instructor {
   pixKey            String?
   averageRating     Float?             @default(0.0)
   totalReviews      Int?               @default(0)
+
+  vehicleMake       String?
+  vehicleYear       Int?
+  transmission      Transmission       @default(MANUAL)
+  engineType        EngineType         @default(COMBUSTION)
+
+  city              String?
+  state             String?
+  neighborhoodReside String?
+  neighborhoodTeach String?
+
+  completedLessonsCount Int            @default(0)
+  rating            Float              @default(0.0)
 
   vehicles Vehicle[]
   lessons  Lesson[]
