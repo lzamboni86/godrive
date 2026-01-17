@@ -5,6 +5,7 @@ import { CreatePaymentDto } from '../payments/dto/create-payment.dto';
 @Injectable()
 export class MercadoPagoService {
   private client: Preference;
+  private isSandbox: boolean;
 
   constructor() {
     // Configurar o cliente do Mercado Pago com credenciais do ambiente
@@ -17,6 +18,8 @@ export class MercadoPagoService {
     if (!accessToken) {
       throw new Error('MERCADO_PAGO_ACCESS_TOKEN não configurado');
     }
+
+    this.isSandbox = accessToken.startsWith('TEST-');
     
     this.client = new Preference({
       accessToken
@@ -67,22 +70,31 @@ export class MercadoPagoService {
         };
       });
 
+      const backendUrl = process.env.BACKEND_URL;
+      const frontendUrl = process.env.FRONTEND_URL;
+
       // Payload completo para o Mercado Pago
-      const preferenceBody = {
+      const preferenceBody: any = {
         items,
         payer: {
           email: data.payerEmail || 'test_user@test.com'
         },
         external_reference: data.externalReference,
         statement_descriptor: 'GoDrive Aulas',
-        notification_url: `${process.env.BACKEND_URL}/webhooks/mercadopago`,
-        back_urls: {
-          success: `${process.env.FRONTEND_URL}/schedule/success`,
-          failure: `${process.env.FRONTEND_URL}/schedule/failure`,
-          pending: `${process.env.FRONTEND_URL}/schedule/pending`
-        },
         auto_return: 'approved'
       };
+
+      if (backendUrl) {
+        preferenceBody.notification_url = `${backendUrl}/webhooks/mercadopago`;
+      }
+
+      if (frontendUrl) {
+        preferenceBody.back_urls = {
+          success: `${frontendUrl}/schedule/success`,
+          failure: `${frontendUrl}/schedule/failure`,
+          pending: `${frontendUrl}/schedule/pending`,
+        };
+      }
 
       console.log('💳 [MP] Payload enviado ao Mercado Pago:', JSON.stringify(preferenceBody, null, 2));
 
@@ -99,7 +111,8 @@ export class MercadoPagoService {
       return {
         preferenceId: preference.id,
         initPoint: preference.init_point,
-        sandboxInitPoint: preference.sandbox_init_point
+        sandboxInitPoint: preference.sandbox_init_point,
+        isSandbox: this.isSandbox
       };
 
     } catch (error: any) {

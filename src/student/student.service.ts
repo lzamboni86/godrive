@@ -333,19 +333,13 @@ export class StudentService {
           preferenceId: mercadoPagoResponse.preferenceId,
           initPoint: mercadoPagoResponse.initPoint,
           sandboxInitPoint: mercadoPagoResponse.sandboxInitPoint,
+          isSandbox: (mercadoPagoResponse as any).isSandbox,
           message: 'Solicitação criada com sucesso'
         };
 
       } catch (mpError) {
         console.error('❌ Erro ao criar preferência Mercado Pago:', mpError);
-        // Fallback: retornar preference_id simulado
-        const preferenceId = `pref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        return {
-          id: lessons[0].id,
-          preferenceId,
-          message: 'Solicitação criada com sucesso (pagamento simulado)'
-        };
+        throw mpError;
       }
     } catch (error) {
       console.error('❌ Erro ao criar solicitação de agendamento:', error);
