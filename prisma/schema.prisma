@@ -109,6 +109,7 @@ model Instructor {
   state             String?
   neighborhoodReside String?
   neighborhoodTeach String?
+  bio               String?
 
   completedLessonsCount Int            @default(0)
   rating            Float              @default(0.0)

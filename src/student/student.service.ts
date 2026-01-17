@@ -65,6 +65,7 @@ export class StudentService {
       gender: instructor.instructor?.gender,
       completedLessonsCount: instructor.instructor?.completedLessonsCount,
       rating: instructor.instructor?.rating ?? instructor.instructor?.averageRating,
+      bio: instructor.instructor?.bio,
       createdAt: instructor.createdAt.toISOString()
     }));
   }

@@ -52,6 +52,7 @@ async function main() {
       neighborhoodTeach: 'Água Verde',
       completedLessonsCount: 156,
       rating: 4.8,
+      bio: 'Instrutor experiente com mais de 5 anos de prática em formação de condutores. Especializado em condução defensiva e preparação para exames práticos. Paciente e dedicado, foco total no sucesso dos alunos.',
     },
     create: {
       userId: instructorUser.id,
@@ -67,6 +68,7 @@ async function main() {
       neighborhoodTeach: 'Água Verde',
       completedLessonsCount: 156,
       rating: 4.8,
+      bio: 'Instrutor experiente com mais de 5 anos de prática em formação de condutores. Especializado em condução defensiva e preparação para exames práticos. Paciente e dedicado, foco total no sucesso dos alunos.',
       vehicles: {
         create: {
           type: VehicleType.MANUAL,
