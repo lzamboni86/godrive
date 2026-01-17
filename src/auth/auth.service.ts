@@ -129,11 +129,7 @@ export class AuthService {
         userId: user.id,
         gender: (dto.gender as any) || 'UNDISCLOSED',
         licenseCategories: ['B'],
-        hourlyRate: dto.hourlyRate || 80.0, // Usa valor informado ou padrão
-        vehicleMake: dto.vehicleMake || (dto.vehicleModel ? dto.vehicleModel.split(' ')[0] : null),
-        vehicleYear: dto.vehicleYear,
-        transmission: (dto.transmission as any) || 'MANUAL',
-        engineType: (dto.engineType as any) || 'COMBUSTION',
+        hourlyRate: dto.hourlyRate || 80.0,
         state: dto.state,
         city: dto.city,
         neighborhoodReside: dto.neighborhoodReside,
@@ -149,6 +145,8 @@ export class AuthService {
         model: dto.vehicleModel,
         year: dto.vehicleYear,
         plate: dto.vehiclePlate,
+        transmission: (dto.transmission as any) || 'MANUAL',
+        engineType: (dto.engineType as any) || 'COMBUSTION',
       },
     });
 

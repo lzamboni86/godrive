@@ -105,11 +105,6 @@ model Instructor {
   averageRating     Float?             @default(0.0)
   totalReviews      Int?               @default(0)
 
-  vehicleMake       String?
-  vehicleYear       Int?
-  transmission      Transmission       @default(MANUAL)
-  engineType        EngineType         @default(COMBUSTION)
-
   city              String?
   state             String?
   neighborhoodReside String?
@@ -137,6 +132,8 @@ model Vehicle {
   model String?
   year  Int?
   plate String?
+  transmission Transmission @default(MANUAL)
+  engineType  EngineType   @default(COMBUSTION)
 
   lessons Lesson[]
 

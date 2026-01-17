@@ -15,33 +15,38 @@ export class StudentService {
     state?: string;
     city?: string;
     neighborhoodTeach?: string;
-    gender?: string;
-    transmission?: string;
-    engineType?: string;
+    gender?: 'MALE' | 'FEMALE' | 'OTHER' | 'UNDISCLOSED';
+    transmission?: 'MANUAL' | 'AUTOMATIC';
+    engineType?: 'COMBUSTION' | 'ELECTRIC';
   }) {
-    const instructorWhere: any = {
-      status: 'APPROVED',
+    const where: any = {
+      instructor: {
+        status: 'APPROVED',
+        ...(filters?.state && { state: filters.state }),
+        ...(filters?.city && { city: filters.city }),
+        ...(filters?.neighborhoodTeach && { neighborhoodTeach: filters.neighborhoodTeach }),
+        ...(filters?.gender && { gender: filters.gender }),
+        vehicles: {
+          some: {
+            ...(filters?.transmission && { transmission: filters.transmission }),
+            ...(filters?.engineType && { engineType: filters.engineType }),
+          },
+        },
+      },
     };
 
-    if (filters?.state) instructorWhere.state = filters.state;
-    if (filters?.city) instructorWhere.city = filters.city;
-    if (filters?.neighborhoodTeach) instructorWhere.neighborhoodTeach = filters.neighborhoodTeach;
-    if (filters?.gender) instructorWhere.gender = filters.gender;
-    if (filters?.transmission) instructorWhere.transmission = filters.transmission;
-    if (filters?.engineType) instructorWhere.engineType = filters.engineType;
-
     const instructors = await this.prisma.user.findMany({
-      where: {
-        role: 'INSTRUCTOR',
-        instructor: instructorWhere
-      },
+      where,
       include: {
         instructor: {
           include: {
-            vehicles: true
-          }
-        }
-      }
+            vehicles: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
 
     return instructors.map(instructor => ({
@@ -53,17 +58,13 @@ export class StudentService {
       vehicle: instructor.instructor?.vehicles?.[0] || null,
       cnh: instructor.instructor?.licenseCategories?.join(', ') || null,
       hourlyRate: instructor.instructor?.hourlyRate || 80.0,
-      vehicleMake: (instructor.instructor as any)?.vehicleMake,
-      vehicleYear: (instructor.instructor as any)?.vehicleYear,
-      transmission: (instructor.instructor as any)?.transmission,
-      engineType: (instructor.instructor as any)?.engineType,
-      state: (instructor.instructor as any)?.state,
-      city: (instructor.instructor as any)?.city,
-      neighborhoodReside: (instructor.instructor as any)?.neighborhoodReside,
-      neighborhoodTeach: (instructor.instructor as any)?.neighborhoodTeach,
-      gender: (instructor.instructor as any)?.gender,
-      completedLessonsCount: (instructor.instructor as any)?.completedLessonsCount,
-      rating: (instructor.instructor as any)?.rating ?? (instructor.instructor as any)?.averageRating,
+      state: instructor.instructor?.state,
+      city: instructor.instructor?.city,
+      neighborhoodReside: instructor.instructor?.neighborhoodReside,
+      neighborhoodTeach: instructor.instructor?.neighborhoodTeach,
+      gender: instructor.instructor?.gender,
+      completedLessonsCount: instructor.instructor?.completedLessonsCount,
+      rating: instructor.instructor?.rating ?? instructor.instructor?.averageRating,
       createdAt: instructor.createdAt.toISOString()
     }));
   }
