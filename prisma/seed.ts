@@ -1,94 +1,117 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Gender, InstructorStatus, Transmission, EngineType, VehicleType } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Iniciando seed do banco de dados...');
 
-  // Criar usuários de teste
-  const hashedPassword = '$2b$10$abcdefghijklmnopqrstuv.ABCDEFGHIJKLMNOPQRSTUVWXYZ012345'; // 123456
-  const hashedPasswordInstructor = '$2b$10$abcdefghijklmnopqrstuv.ABCDEFGHIJKLMNOPQRSTUVWXYZ012345'; // Novo@2022
-  const hashedPasswordAdmin = '$2b$10$abcdefghijklmnopqrstuv.ABCDEFGHIJKLMNOPQRSTUVWXYZ012345'; // Teste123
+  // Criar senhas hasheadas
+  const adminPassword = await bcrypt.hash('admin123', 10);
+  const instructorPassword = await bcrypt.hash('instrutor123', 10);
+  const studentPassword = await bcrypt.hash('aluno123', 10);
 
-  // Aluno de teste
-  const student = await prisma.user.upsert({
-    where: { email: 'aluno@teste.com' },
+  // Criar Admin
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@godrive.com' },
     update: {},
     create: {
-      email: 'aluno@teste.com',
-      passwordHash: hashedPassword,
-      role: 'STUDENT',
-    }
+      email: 'admin@godrive.com',
+      passwordHash: adminPassword,
+      role: 'ADMIN',
+      name: 'Admin GoDrive',
+      phone: '11999999999',
+    },
   });
 
-  // Aluno específico do usuário
-  const student2 = await prisma.user.upsert({
-    where: { email: 'luis.h.zamboni@outlook.com' },
-    update: {},
-    create: {
-      email: 'luis.h.zamboni@outlook.com',
-      passwordHash: hashedPassword,
-      role: 'STUDENT',
-    }
-  });
-
-  // Instrutor de teste
+  // Criar Instrutor
   const instructorUser = await prisma.user.upsert({
-    where: { email: 'luis.h.zamboni@gmail.com' },
+    where: { email: 'joao@godrive.com' },
     update: {},
     create: {
-      email: 'luis.h.zamboni@gmail.com',
-      passwordHash: hashedPasswordInstructor,
+      email: 'joao@godrive.com',
+      passwordHash: instructorPassword,
       role: 'INSTRUCTOR',
-    }
+      name: 'João da Silva',
+      phone: '11988887777',
+    },
   });
 
-  // Criar instrutor associado
+  // Criar instrutor associado com dados completos
   const instructor = await prisma.instructor.upsert({
     where: { userId: instructorUser.id },
-    update: { hourlyRate: 2.0 },
+    update: {
+      gender: 'MALE',
+      status: 'APPROVED',
+      hourlyRate: 90.0,
+      averageRating: 4.8,
+      totalReviews: 25,
+      state: 'Paraná',
+      city: 'Curitiba',
+      neighborhoodReside: 'Água Verde',
+      neighborhoodTeach: 'Água Verde',
+      completedLessonsCount: 156,
+      rating: 4.8,
+    },
     create: {
       userId: instructorUser.id,
       gender: 'MALE',
+      licenseCategories: ['B'],
       status: 'APPROVED',
-      hourlyRate: 2.0,
+      hourlyRate: 90.0,
+      averageRating: 4.8,
+      totalReviews: 25,
+      state: 'Paraná',
+      city: 'Curitiba',
+      neighborhoodReside: 'Água Verde',
+      neighborhoodTeach: 'Água Verde',
+      completedLessonsCount: 156,
+      rating: 4.8,
       vehicles: {
         create: {
-          type: 'MANUAL',
-          make: 'Fiat',
-          model: 'Palio',
-          year: 2020,
-          plate: 'ABC1234'
-        }
-      }
+          type: VehicleType.MANUAL,
+          make: 'GM',
+          model: 'Onix',
+          year: 2023,
+          plate: 'ABC1D23',
+          transmission: Transmission.MANUAL,
+          engineType: EngineType.COMBUSTION,
+        },
+      },
     },
     include: {
       vehicles: true,
-      user: true
-    }
+      user: true,
+    },
   });
 
-  // Admin de teste
-  const admin = await prisma.user.upsert({
-    where: { email: 'luis.zamboni@deltaprotecnologia.com.br' },
+  // Criar Aluno
+  const student = await prisma.user.upsert({
+    where: { email: 'maria@godrive.com' },
     update: {},
     create: {
-      email: 'luis.zamboni@deltaprotecnologia.com.br',
-      passwordHash: hashedPasswordAdmin,
-      role: 'ADMIN',
-    }
+      email: 'maria@godrive.com',
+      passwordHash: studentPassword,
+      role: 'STUDENT',
+      name: 'Maria Santos',
+      phone: '11977776666',
+    },
   });
 
   console.log('✅ Seed concluído com sucesso!');
-  console.log('👤 Aluno criado:', student.email);
-  console.log('👤 Aluno 2 criado:', student2.email);
-  console.log('👤 Instrutor criado:', instructor.user.email, '- Valor/hora: R$', instructor.hourlyRate);
-  console.log('👤 Admin criado:', admin.email);
+  console.log('📧 Usuários criados:');
+  console.log('  Admin: admin@godrive.com / admin123');
+  console.log('  Instrutor: joao@godrive.com / instrutor123');
+  console.log('  Aluno: maria@godrive.com / aluno123');
+  console.log('🚗 Veículo: GM Onix 2023 (Manual, Combustão)');
+  console.log('📍 Instrutor atende em: Curitiba/PR, Água Verde');
+  console.log('⭐ Avaliação: 4.8 (25 avaliações)');
+  console.log('📊 Aulas realizadas: 156');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ Erro no seed:', e);
     process.exit(1);
   })
   .finally(async () => {
