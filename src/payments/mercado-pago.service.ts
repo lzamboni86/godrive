@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { CreatePaymentDto } from '../payments/dto/create-payment.dto';
 
 @Injectable()
@@ -20,10 +20,9 @@ export class MercadoPagoService {
     }
 
     this.isSandbox = accessToken.startsWith('TEST-');
-    
-    this.client = new Preference({
-      accessToken
-    });
+
+    const sdkClient = new MercadoPagoConfig({ accessToken });
+    this.client = new Preference(sdkClient);
   }
 
   async createPaymentPreference(data: CreatePaymentDto) {
