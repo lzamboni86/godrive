@@ -1,32 +1,21 @@
 import { PrismaService } from '../prisma/prisma.service';
-export declare class PaymentsService {
-    private readonly prisma;
+import { CreateMessageDto } from './dto/create-message.dto';
+export declare class ChatService {
+    private prisma;
     constructor(prisma: PrismaService);
-    releasePayment(lessonId: string): Promise<{
+    createChat(lessonId: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.PaymentStatus;
         lessonId: string;
-        amount: import("@prisma/client/runtime/library").Decimal;
-        currency: string;
-        releasedAt: Date | null;
-        refundedAt: Date | null;
     }>;
-    getInstructorReleasedBalance(instructorId: string): Promise<number>;
-    getInstructorPendingBalance(instructorId: string): Promise<number>;
-    getInstructorPayments(instructorId: string): Promise<({
+    getChatByLesson(lessonId: string): Promise<({
         lesson: {
             instructor: {
                 user: {
                     id: string;
                     email: string;
-                    passwordHash: string;
-                    role: import("@prisma/client").$Enums.UserRole;
                     name: string | null;
-                    phone: string | null;
-                    createdAt: Date;
-                    updatedAt: Date;
                 };
             } & {
                 id: string;
@@ -44,12 +33,7 @@ export declare class PaymentsService {
             student: {
                 id: string;
                 email: string;
-                passwordHash: string;
-                role: import("@prisma/client").$Enums.UserRole;
                 name: string | null;
-                phone: string | null;
-                createdAt: Date;
-                updatedAt: Date;
             };
         } & {
             id: string;
@@ -64,15 +48,56 @@ export declare class PaymentsService {
             payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
             receiptUrl: string | null;
         };
+        messages: ({
+            sender: {
+                id: string;
+                email: string;
+                role: import("@prisma/client").$Enums.UserRole;
+                name: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            chatId: string;
+            content: string;
+            senderId: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.PaymentStatus;
         lessonId: string;
-        amount: import("@prisma/client/runtime/library").Decimal;
-        currency: string;
-        releasedAt: Date | null;
-        refundedAt: Date | null;
+    }) | null>;
+    sendMessage(createMessageDto: CreateMessageDto, senderId: string): Promise<{
+        sender: {
+            id: string;
+            email: string;
+            role: import("@prisma/client").$Enums.UserRole;
+            name: string | null;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        chatId: string;
+        content: string;
+        senderId: string;
+    }>;
+    getMessages(chatId: string, userId: string): Promise<({
+        sender: {
+            id: string;
+            email: string;
+            role: import("@prisma/client").$Enums.UserRole;
+            name: string | null;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        chatId: string;
+        content: string;
+        senderId: string;
     })[]>;
+    canSendMessage(chatId: string, userId: string): Promise<boolean>;
 }

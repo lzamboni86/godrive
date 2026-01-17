@@ -6,21 +6,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LessonsModule = void 0;
+exports.ReviewModule = void 0;
 const common_1 = require("@nestjs/common");
-const lessons_service_1 = require("./lessons.service");
-const lessons_controller_1 = require("./lessons.controller");
-const prisma_module_1 = require("../prisma/prisma.module");
-const chat_module_1 = require("../chat/chat.module");
-let LessonsModule = class LessonsModule {
+const review_service_1 = require("./review.service");
+const review_controller_1 = require("./review.controller");
+let ReviewModule = class ReviewModule {
 };
-exports.LessonsModule = LessonsModule;
-exports.LessonsModule = LessonsModule = __decorate([
+exports.ReviewModule = ReviewModule;
+exports.ReviewModule = ReviewModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, chat_module_1.ChatModule],
-        controllers: [lessons_controller_1.LessonsController],
-        providers: [lessons_service_1.LessonsService],
-        exports: [lessons_service_1.LessonsService],
+        controllers: [review_controller_1.ReviewController],
+        providers: [review_service_1.ReviewService],
+        exports: [review_service_1.ReviewService],
     })
-], LessonsModule);
-//# sourceMappingURL=lessons.module.js.map
+], ReviewModule);
+//# sourceMappingURL=review.module.js.map

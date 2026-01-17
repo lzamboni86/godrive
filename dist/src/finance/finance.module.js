@@ -6,21 +6,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LessonsModule = void 0;
+exports.FinanceModule = void 0;
 const common_1 = require("@nestjs/common");
-const lessons_service_1 = require("./lessons.service");
-const lessons_controller_1 = require("./lessons.controller");
-const prisma_module_1 = require("../prisma/prisma.module");
-const chat_module_1 = require("../chat/chat.module");
-let LessonsModule = class LessonsModule {
+const finance_service_1 = require("./finance.service");
+const finance_controller_1 = require("./finance.controller");
+let FinanceModule = class FinanceModule {
 };
-exports.LessonsModule = LessonsModule;
-exports.LessonsModule = LessonsModule = __decorate([
+exports.FinanceModule = FinanceModule;
+exports.FinanceModule = FinanceModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, chat_module_1.ChatModule],
-        controllers: [lessons_controller_1.LessonsController],
-        providers: [lessons_service_1.LessonsService],
-        exports: [lessons_service_1.LessonsService],
+        controllers: [finance_controller_1.FinanceController],
+        providers: [finance_service_1.FinanceService],
+        exports: [finance_service_1.FinanceService],
     })
-], LessonsModule);
-//# sourceMappingURL=lessons.module.js.map
+], FinanceModule);
+//# sourceMappingURL=finance.module.js.map

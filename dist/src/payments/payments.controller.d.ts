@@ -46,6 +46,8 @@ export declare class PaymentsController {
                 status: import("@prisma/client").$Enums.InstructorStatus;
                 hourlyRate: number;
                 pixKey: string | null;
+                averageRating: number | null;
+                totalReviews: number | null;
             };
             student: {
                 id: string;
@@ -67,6 +69,8 @@ export declare class PaymentsController {
             vehicleId: string | null;
             lessonDate: Date;
             lessonTime: Date;
+            payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+            receiptUrl: string | null;
         };
     } & {
         id: string;

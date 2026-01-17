@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LessonsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const chat_service_1 = require("../chat/chat.service");
 let LessonsService = class LessonsService {
     prisma;
-    constructor(prisma) {
+    chatService;
+    constructor(prisma, chatService) {
         this.prisma = prisma;
+        this.chatService = chatService;
     }
     async findByInstructor(instructorId) {
         return this.prisma.lesson.findMany({
@@ -77,7 +80,7 @@ let LessonsService = class LessonsService {
         });
     }
     async updateStatus(id, status) {
-        return this.prisma.lesson.update({
+        const lesson = await this.prisma.lesson.update({
             where: { id },
             data: { status: status },
             include: {
@@ -86,11 +89,16 @@ let LessonsService = class LessonsService {
                 vehicle: true,
             },
         });
+        if (status === 'CONFIRMED') {
+            await this.chatService.createChat(id);
+        }
+        return lesson;
     }
 };
 exports.LessonsService = LessonsService;
 exports.LessonsService = LessonsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        chat_service_1.ChatService])
 ], LessonsService);
 //# sourceMappingURL=lessons.service.js.map

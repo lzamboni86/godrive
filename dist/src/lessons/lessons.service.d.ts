@@ -1,7 +1,9 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { ChatService } from '../chat/chat.service';
 export declare class LessonsService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private chatService;
+    constructor(prisma: PrismaService, chatService: ChatService);
     findByInstructor(instructorId: string): Promise<({
         instructor: {
             user: {
@@ -24,6 +26,8 @@ export declare class LessonsService {
             status: import("@prisma/client").$Enums.InstructorStatus;
             hourlyRate: number;
             pixKey: string | null;
+            averageRating: number | null;
+            totalReviews: number | null;
         };
         student: {
             id: string;
@@ -56,6 +60,8 @@ export declare class LessonsService {
         vehicleId: string | null;
         lessonDate: Date;
         lessonTime: Date;
+        payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+        receiptUrl: string | null;
     })[]>;
     findTodayByInstructor(instructorId: string): Promise<({
         instructor: {
@@ -79,6 +85,8 @@ export declare class LessonsService {
             status: import("@prisma/client").$Enums.InstructorStatus;
             hourlyRate: number;
             pixKey: string | null;
+            averageRating: number | null;
+            totalReviews: number | null;
         };
         student: {
             id: string;
@@ -111,6 +119,8 @@ export declare class LessonsService {
         vehicleId: string | null;
         lessonDate: Date;
         lessonTime: Date;
+        payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+        receiptUrl: string | null;
     })[]>;
     findOne(id: string): Promise<({
         instructor: {
@@ -134,6 +144,8 @@ export declare class LessonsService {
             status: import("@prisma/client").$Enums.InstructorStatus;
             hourlyRate: number;
             pixKey: string | null;
+            averageRating: number | null;
+            totalReviews: number | null;
         };
         student: {
             id: string;
@@ -166,6 +178,8 @@ export declare class LessonsService {
         vehicleId: string | null;
         lessonDate: Date;
         lessonTime: Date;
+        payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+        receiptUrl: string | null;
     }) | null>;
     updateStatus(id: string, status: string): Promise<{
         instructor: {
@@ -178,6 +192,8 @@ export declare class LessonsService {
             status: import("@prisma/client").$Enums.InstructorStatus;
             hourlyRate: number;
             pixKey: string | null;
+            averageRating: number | null;
+            totalReviews: number | null;
         };
         student: {
             id: string;
@@ -210,5 +226,7 @@ export declare class LessonsService {
         vehicleId: string | null;
         lessonDate: Date;
         lessonTime: Date;
+        payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+        receiptUrl: string | null;
     }>;
 }

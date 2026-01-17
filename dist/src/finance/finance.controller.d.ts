@@ -1,18 +1,14 @@
-import { LessonsService } from './lessons.service';
-export declare class LessonsController {
-    private lessonsService;
-    constructor(lessonsService: LessonsService);
-    findByInstructor(instructorId: string): Promise<({
+import { FinanceService } from './finance.service';
+import { UpdatePayoutDto } from './dto/update-payout.dto';
+export declare class FinanceController {
+    private readonly financeService;
+    constructor(financeService: FinanceService);
+    getPendingPayouts(): Promise<({
         instructor: {
             user: {
                 id: string;
                 email: string;
-                passwordHash: string;
-                role: import("@prisma/client").$Enums.UserRole;
                 name: string | null;
-                phone: string | null;
-                createdAt: Date;
-                updatedAt: Date;
             };
         } & {
             id: string;
@@ -27,15 +23,24 @@ export declare class LessonsController {
             averageRating: number | null;
             totalReviews: number | null;
         };
+        reviews: ({
+            student: {
+                name: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            studentId: string;
+            instructorId: string;
+            lessonId: string;
+            rating: number;
+            comment: string | null;
+        })[];
         student: {
             id: string;
             email: string;
-            passwordHash: string;
-            role: import("@prisma/client").$Enums.UserRole;
             name: string | null;
-            phone: string | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
         vehicle: {
             id: string;
@@ -61,40 +66,25 @@ export declare class LessonsController {
         payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
         receiptUrl: string | null;
     })[]>;
-    findTodayByInstructor(instructorId: string): Promise<({
-        instructor: {
-            user: {
-                id: string;
-                email: string;
-                passwordHash: string;
-                role: import("@prisma/client").$Enums.UserRole;
+    getInstructorPendingPayouts(req: any): Promise<({
+        reviews: ({
+            student: {
                 name: string | null;
-                phone: string | null;
-                createdAt: Date;
-                updatedAt: Date;
             };
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            gender: import("@prisma/client").$Enums.Gender;
-            licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
-            status: import("@prisma/client").$Enums.InstructorStatus;
-            hourlyRate: number;
-            pixKey: string | null;
-            averageRating: number | null;
-            totalReviews: number | null;
-        };
+            studentId: string;
+            instructorId: string;
+            lessonId: string;
+            rating: number;
+            comment: string | null;
+        })[];
         student: {
             id: string;
             email: string;
-            passwordHash: string;
-            role: import("@prisma/client").$Enums.UserRole;
             name: string | null;
-            phone: string | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
         vehicle: {
             id: string;
@@ -120,40 +110,25 @@ export declare class LessonsController {
         payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
         receiptUrl: string | null;
     })[]>;
-    findOne(id: string): Promise<({
-        instructor: {
-            user: {
-                id: string;
-                email: string;
-                passwordHash: string;
-                role: import("@prisma/client").$Enums.UserRole;
+    getInstructorPaymentHistory(req: any): Promise<({
+        reviews: ({
+            student: {
                 name: string | null;
-                phone: string | null;
-                createdAt: Date;
-                updatedAt: Date;
             };
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            gender: import("@prisma/client").$Enums.Gender;
-            licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
-            status: import("@prisma/client").$Enums.InstructorStatus;
-            hourlyRate: number;
-            pixKey: string | null;
-            averageRating: number | null;
-            totalReviews: number | null;
-        };
+            studentId: string;
+            instructorId: string;
+            lessonId: string;
+            rating: number;
+            comment: string | null;
+        })[];
         student: {
             id: string;
             email: string;
-            passwordHash: string;
-            role: import("@prisma/client").$Enums.UserRole;
             name: string | null;
-            phone: string | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
         vehicle: {
             id: string;
@@ -178,11 +153,15 @@ export declare class LessonsController {
         lessonTime: Date;
         payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
         receiptUrl: string | null;
-    }) | null>;
-    updateStatus(id: string, body: {
-        status: string;
-    }): Promise<{
+    })[]>;
+    getAllPaymentHistory(): Promise<({
         instructor: {
+            user: {
+                id: string;
+                email: string;
+                name: string | null;
+            };
+        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
@@ -195,15 +174,84 @@ export declare class LessonsController {
             averageRating: number | null;
             totalReviews: number | null;
         };
+        reviews: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            studentId: string;
+            instructorId: string;
+            lessonId: string;
+            rating: number;
+            comment: string | null;
+        }[];
         student: {
             id: string;
             email: string;
-            passwordHash: string;
-            role: import("@prisma/client").$Enums.UserRole;
             name: string | null;
-            phone: string | null;
+        };
+        vehicle: {
+            id: string;
             createdAt: Date;
             updatedAt: Date;
+            type: import("@prisma/client").$Enums.VehicleType;
+            make: string | null;
+            model: string | null;
+            year: number | null;
+            plate: string | null;
+            instructorId: string;
+        } | null;
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import("@prisma/client").$Enums.LessonStatus;
+        studentId: string;
+        instructorId: string;
+        vehicleId: string | null;
+        lessonDate: Date;
+        lessonTime: Date;
+        payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+        receiptUrl: string | null;
+    })[]>;
+    getFinanceStats(): Promise<{
+        pendingCount: number;
+        paidCount: number;
+        totalPendingAmount: number;
+    }>;
+    markAsPaid(lessonId: string, updatePayoutDto: UpdatePayoutDto): Promise<{
+        instructor: {
+            user: {
+                id: string;
+                email: string;
+                name: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            userId: string;
+            gender: import("@prisma/client").$Enums.Gender;
+            licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
+            status: import("@prisma/client").$Enums.InstructorStatus;
+            hourlyRate: number;
+            pixKey: string | null;
+            averageRating: number | null;
+            totalReviews: number | null;
+        };
+        reviews: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            studentId: string;
+            instructorId: string;
+            lessonId: string;
+            rating: number;
+            comment: string | null;
+        }[];
+        student: {
+            id: string;
+            email: string;
+            name: string | null;
         };
         vehicle: {
             id: string;

@@ -34,6 +34,8 @@ export declare class InstructorService {
         vehicleId: string | null;
         lessonDate: Date;
         lessonTime: Date;
+        payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+        receiptUrl: string | null;
     })[]>;
     approveRequest(requestId: string): Promise<{
         message: string;
@@ -59,6 +61,8 @@ export declare class InstructorService {
             vehicleId: string | null;
             lessonDate: Date;
             lessonTime: Date;
+            payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+            receiptUrl: string | null;
         };
     }>;
     rejectRequest(requestId: string): Promise<{
@@ -85,6 +89,8 @@ export declare class InstructorService {
             vehicleId: string | null;
             lessonDate: Date;
             lessonTime: Date;
+            payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+            receiptUrl: string | null;
         };
     }>;
     getPayments(instructorId: string): Promise<({
@@ -109,6 +115,8 @@ export declare class InstructorService {
             vehicleId: string | null;
             lessonDate: Date;
             lessonTime: Date;
+            payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+            receiptUrl: string | null;
         };
     } & {
         id: string;
@@ -137,6 +145,8 @@ export declare class InstructorService {
             status: import("@prisma/client").$Enums.InstructorStatus;
             hourlyRate: number;
             pixKey: string | null;
+            averageRating: number | null;
+            totalReviews: number | null;
         };
     }>;
     getSchedule(instructorId: string): Promise<({
@@ -171,6 +181,8 @@ export declare class InstructorService {
         vehicleId: string | null;
         lessonDate: Date;
         lessonTime: Date;
+        payoutStatus: import("@prisma/client").$Enums.PayoutStatus;
+        receiptUrl: string | null;
     })[]>;
     updateProfile(instructorId: string, data: {
         hourlyRate?: number;
@@ -187,6 +199,8 @@ export declare class InstructorService {
             status: import("@prisma/client").$Enums.InstructorStatus;
             hourlyRate: number;
             pixKey: string | null;
+            averageRating: number | null;
+            totalReviews: number | null;
         };
     }>;
 }

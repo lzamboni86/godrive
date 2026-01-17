@@ -6,21 +6,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LessonsModule = void 0;
+exports.ChatModule = void 0;
 const common_1 = require("@nestjs/common");
-const lessons_service_1 = require("./lessons.service");
-const lessons_controller_1 = require("./lessons.controller");
-const prisma_module_1 = require("../prisma/prisma.module");
-const chat_module_1 = require("../chat/chat.module");
-let LessonsModule = class LessonsModule {
+const chat_service_1 = require("./chat.service");
+const chat_controller_1 = require("./chat.controller");
+let ChatModule = class ChatModule {
 };
-exports.LessonsModule = LessonsModule;
-exports.LessonsModule = LessonsModule = __decorate([
+exports.ChatModule = ChatModule;
+exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, chat_module_1.ChatModule],
-        controllers: [lessons_controller_1.LessonsController],
-        providers: [lessons_service_1.LessonsService],
-        exports: [lessons_service_1.LessonsService],
+        controllers: [chat_controller_1.ChatController],
+        providers: [chat_service_1.ChatService],
+        exports: [chat_service_1.ChatService],
     })
-], LessonsModule);
-//# sourceMappingURL=lessons.module.js.map
+], ChatModule);
+//# sourceMappingURL=chat.module.js.map
