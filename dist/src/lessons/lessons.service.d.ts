@@ -4,22 +4,21 @@ export declare class LessonsService {
     private prisma;
     private chatService;
     constructor(prisma: PrismaService, chatService: ChatService);
+    private syncInstructorCompletedLessonsCount;
     findByInstructor(instructorId: string): Promise<({
         instructor: {
             user: {
                 id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                name: string | null;
                 email: string;
                 passwordHash: string;
                 role: import("@prisma/client").$Enums.UserRole;
-                name: string | null;
                 phone: string | null;
-                createdAt: Date;
-                updatedAt: Date;
             };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -28,16 +27,25 @@ export declare class LessonsService {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
         student: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string | null;
             email: string;
             passwordHash: string;
             role: import("@prisma/client").$Enums.UserRole;
-            name: string | null;
             phone: string | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
         vehicle: {
             id: string;
@@ -48,13 +56,15 @@ export declare class LessonsService {
             model: string | null;
             year: number | null;
             plate: string | null;
+            transmission: import("@prisma/client").$Enums.Transmission;
+            engineType: import("@prisma/client").$Enums.EngineType;
             instructorId: string;
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;
@@ -67,18 +77,16 @@ export declare class LessonsService {
         instructor: {
             user: {
                 id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                name: string | null;
                 email: string;
                 passwordHash: string;
                 role: import("@prisma/client").$Enums.UserRole;
-                name: string | null;
                 phone: string | null;
-                createdAt: Date;
-                updatedAt: Date;
             };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -87,16 +95,25 @@ export declare class LessonsService {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
         student: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string | null;
             email: string;
             passwordHash: string;
             role: import("@prisma/client").$Enums.UserRole;
-            name: string | null;
             phone: string | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
         vehicle: {
             id: string;
@@ -107,13 +124,15 @@ export declare class LessonsService {
             model: string | null;
             year: number | null;
             plate: string | null;
+            transmission: import("@prisma/client").$Enums.Transmission;
+            engineType: import("@prisma/client").$Enums.EngineType;
             instructorId: string;
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;
@@ -126,18 +145,16 @@ export declare class LessonsService {
         instructor: {
             user: {
                 id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                name: string | null;
                 email: string;
                 passwordHash: string;
                 role: import("@prisma/client").$Enums.UserRole;
-                name: string | null;
                 phone: string | null;
-                createdAt: Date;
-                updatedAt: Date;
             };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -146,16 +163,25 @@ export declare class LessonsService {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
         student: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string | null;
             email: string;
             passwordHash: string;
             role: import("@prisma/client").$Enums.UserRole;
-            name: string | null;
             phone: string | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
         vehicle: {
             id: string;
@@ -166,13 +192,15 @@ export declare class LessonsService {
             model: string | null;
             year: number | null;
             plate: string | null;
+            transmission: import("@prisma/client").$Enums.Transmission;
+            engineType: import("@prisma/client").$Enums.EngineType;
             instructorId: string;
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;
@@ -184,8 +212,6 @@ export declare class LessonsService {
     updateStatus(id: string, status: string): Promise<{
         instructor: {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -194,16 +220,25 @@ export declare class LessonsService {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
         student: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string | null;
             email: string;
             passwordHash: string;
             role: import("@prisma/client").$Enums.UserRole;
-            name: string | null;
             phone: string | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
         vehicle: {
             id: string;
@@ -214,13 +249,15 @@ export declare class LessonsService {
             model: string | null;
             year: number | null;
             plate: string | null;
+            transmission: import("@prisma/client").$Enums.Transmission;
+            engineType: import("@prisma/client").$Enums.EngineType;
             instructorId: string;
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;

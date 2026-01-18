@@ -6,9 +6,9 @@ export declare class ChatController {
     sendMessage(createMessageDto: CreateMessageDto, req: any): Promise<{
         sender: {
             id: string;
+            name: string | null;
             email: string;
             role: import("@prisma/client").$Enums.UserRole;
-            name: string | null;
         };
     } & {
         id: string;
@@ -21,9 +21,9 @@ export declare class ChatController {
     getMessages(chatId: string, req: any): Promise<({
         sender: {
             id: string;
+            name: string | null;
             email: string;
             role: import("@prisma/client").$Enums.UserRole;
-            name: string | null;
         };
     } & {
         id: string;
@@ -33,18 +33,16 @@ export declare class ChatController {
         content: string;
         senderId: string;
     })[]>;
-    getChatByLesson(lessonId: string, req: any): Promise<({
+    getChatByLesson(lessonId: string, req: any): Promise<{
         lesson: {
             instructor: {
                 user: {
                     id: string;
-                    email: string;
                     name: string | null;
+                    email: string;
                 };
             } & {
                 id: string;
-                createdAt: Date;
-                updatedAt: Date;
                 userId: string;
                 gender: import("@prisma/client").$Enums.Gender;
                 licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -53,17 +51,26 @@ export declare class ChatController {
                 pixKey: string | null;
                 averageRating: number | null;
                 totalReviews: number | null;
+                city: string | null;
+                state: string | null;
+                neighborhoodReside: string | null;
+                neighborhoodTeach: string | null;
+                bio: string | null;
+                completedLessonsCount: number;
+                rating: number;
+                createdAt: Date;
+                updatedAt: Date;
             };
             student: {
                 id: string;
-                email: string;
                 name: string | null;
+                email: string;
             };
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.LessonStatus;
             createdAt: Date;
             updatedAt: Date;
-            status: import("@prisma/client").$Enums.LessonStatus;
             studentId: string;
             instructorId: string;
             vehicleId: string | null;
@@ -75,9 +82,9 @@ export declare class ChatController {
         messages: ({
             sender: {
                 id: string;
+                name: string | null;
                 email: string;
                 role: import("@prisma/client").$Enums.UserRole;
-                name: string | null;
             };
         } & {
             id: string;
@@ -92,7 +99,7 @@ export declare class ChatController {
         createdAt: Date;
         updatedAt: Date;
         lessonId: string;
-    }) | null>;
+    }>;
     canSendMessage(chatId: string, req: any): Promise<{
         canSend: boolean;
     }>;

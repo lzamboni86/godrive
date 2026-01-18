@@ -23,8 +23,15 @@ let StudentController = class StudentController {
     constructor(studentService) {
         this.studentService = studentService;
     }
-    async getApprovedInstructors() {
-        return this.studentService.getApprovedInstructors();
+    async getApprovedInstructors(state, city, neighborhoodTeach, gender, transmission, engineType) {
+        return this.studentService.getApprovedInstructors({
+            state,
+            city,
+            neighborhoodTeach,
+            gender: gender,
+            transmission: transmission,
+            engineType: engineType,
+        });
     }
     async getStudentLessons(studentId) {
         return this.studentService.getStudentLessons(studentId);
@@ -51,8 +58,14 @@ let StudentController = class StudentController {
 exports.StudentController = StudentController;
 __decorate([
     (0, common_1.Get)('instructors/approved'),
+    __param(0, (0, common_1.Query)('state')),
+    __param(1, (0, common_1.Query)('city')),
+    __param(2, (0, common_1.Query)('neighborhoodTeach')),
+    __param(3, (0, common_1.Query)('gender')),
+    __param(4, (0, common_1.Query)('transmission')),
+    __param(5, (0, common_1.Query)('engineType')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], StudentController.prototype, "getApprovedInstructors", null);
 __decorate([

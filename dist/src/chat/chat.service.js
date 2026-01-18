@@ -17,6 +17,22 @@ let ChatService = class ChatService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async assertUserCanAccessLesson(lessonId, userId) {
+        const lesson = await this.prisma.lesson.findUnique({
+            where: { id: lessonId },
+            include: {
+                instructor: true,
+            },
+        });
+        if (!lesson) {
+            throw new common_1.NotFoundException('Lesson not found');
+        }
+        const isParticipant = lesson.studentId === userId || lesson.instructor.userId === userId;
+        if (!isParticipant) {
+            throw new common_1.ForbiddenException('User is not a participant of this lesson');
+        }
+        return lesson;
+    }
     async createChat(lessonId) {
         const existingChat = await this.prisma.chat.findUnique({
             where: { lessonId },
@@ -33,8 +49,10 @@ let ChatService = class ChatService {
             },
         });
     }
-    async getChatByLesson(lessonId) {
-        return this.prisma.chat.findUnique({
+    async getChatByLesson(lessonId, userId) {
+        await this.assertUserCanAccessLesson(lessonId, userId);
+        await this.createChat(lessonId);
+        const chat = await this.prisma.chat.findUnique({
             where: { lessonId },
             include: {
                 messages: {
@@ -76,24 +94,31 @@ let ChatService = class ChatService {
                 },
             },
         });
+        if (!chat) {
+            throw new common_1.NotFoundException('Chat not found');
+        }
+        return chat;
     }
     async sendMessage(createMessageDto, senderId) {
         const chat = await this.prisma.chat.findUnique({
             where: { id: createMessageDto.chatId },
             include: {
-                lesson: true,
+                lesson: {
+                    include: {
+                        instructor: true,
+                    },
+                },
             },
         });
         if (!chat) {
-            throw new Error('Chat not found');
+            throw new common_1.NotFoundException('Chat not found');
         }
         if (chat.lesson.status === 'COMPLETED') {
-            throw new Error('Cannot send messages to completed lesson');
+            throw new common_1.ForbiddenException('Cannot send messages to completed lesson');
         }
-        const isParticipant = chat.lesson.studentId === senderId ||
-            chat.lesson.instructorId === senderId;
+        const isParticipant = chat.lesson.studentId === senderId || chat.lesson.instructor.userId === senderId;
         if (!isParticipant) {
-            throw new Error('User is not a participant of this lesson');
+            throw new common_1.ForbiddenException('User is not a participant of this lesson');
         }
         return this.prisma.message.create({
             data: {
@@ -117,16 +142,19 @@ let ChatService = class ChatService {
         const chat = await this.prisma.chat.findUnique({
             where: { id: chatId },
             include: {
-                lesson: true,
+                lesson: {
+                    include: {
+                        instructor: true,
+                    },
+                },
             },
         });
         if (!chat) {
-            throw new Error('Chat not found');
+            throw new common_1.NotFoundException('Chat not found');
         }
-        const isParticipant = chat.lesson.studentId === userId ||
-            chat.lesson.instructorId === userId;
+        const isParticipant = chat.lesson.studentId === userId || chat.lesson.instructor.userId === userId;
         if (!isParticipant) {
-            throw new Error('User is not a participant of this lesson');
+            throw new common_1.ForbiddenException('User is not a participant of this lesson');
         }
         return this.prisma.message.findMany({
             where: { chatId },
@@ -149,14 +177,17 @@ let ChatService = class ChatService {
         const chat = await this.prisma.chat.findUnique({
             where: { id: chatId },
             include: {
-                lesson: true,
+                lesson: {
+                    include: {
+                        instructor: true,
+                    },
+                },
             },
         });
         if (!chat) {
             return false;
         }
-        const isParticipant = chat.lesson.studentId === userId ||
-            chat.lesson.instructorId === userId;
+        const isParticipant = chat.lesson.studentId === userId || chat.lesson.instructor.userId === userId;
         const isLessonActive = chat.lesson.status !== 'COMPLETED';
         return isParticipant && isLessonActive;
     }

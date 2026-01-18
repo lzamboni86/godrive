@@ -5,19 +5,19 @@ export declare class InstructorController {
     getLessonRequests(instructorId: string): Promise<({
         student: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string | null;
             email: string;
             passwordHash: string;
             role: import("@prisma/client").$Enums.UserRole;
-            name: string | null;
             phone: string | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
         payment: {
             id: string;
+            status: import("@prisma/client").$Enums.PaymentStatus;
             createdAt: Date;
             updatedAt: Date;
-            status: import("@prisma/client").$Enums.PaymentStatus;
             lessonId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
             currency: string;
@@ -26,9 +26,9 @@ export declare class InstructorController {
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;
@@ -42,9 +42,9 @@ export declare class InstructorController {
         lesson: {
             payment: {
                 id: string;
+                status: import("@prisma/client").$Enums.PaymentStatus;
                 createdAt: Date;
                 updatedAt: Date;
-                status: import("@prisma/client").$Enums.PaymentStatus;
                 lessonId: string;
                 amount: import("@prisma/client/runtime/library").Decimal;
                 currency: string;
@@ -53,9 +53,9 @@ export declare class InstructorController {
             } | null;
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.LessonStatus;
             createdAt: Date;
             updatedAt: Date;
-            status: import("@prisma/client").$Enums.LessonStatus;
             studentId: string;
             instructorId: string;
             vehicleId: string | null;
@@ -70,9 +70,9 @@ export declare class InstructorController {
         lesson: {
             payment: {
                 id: string;
+                status: import("@prisma/client").$Enums.PaymentStatus;
                 createdAt: Date;
                 updatedAt: Date;
-                status: import("@prisma/client").$Enums.PaymentStatus;
                 lessonId: string;
                 amount: import("@prisma/client/runtime/library").Decimal;
                 currency: string;
@@ -81,9 +81,9 @@ export declare class InstructorController {
             } | null;
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.LessonStatus;
             createdAt: Date;
             updatedAt: Date;
-            status: import("@prisma/client").$Enums.LessonStatus;
             studentId: string;
             instructorId: string;
             vehicleId: string | null;
@@ -97,19 +97,19 @@ export declare class InstructorController {
         lesson: {
             student: {
                 id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                name: string | null;
                 email: string;
                 passwordHash: string;
                 role: import("@prisma/client").$Enums.UserRole;
-                name: string | null;
                 phone: string | null;
-                createdAt: Date;
-                updatedAt: Date;
             };
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.LessonStatus;
             createdAt: Date;
             updatedAt: Date;
-            status: import("@prisma/client").$Enums.LessonStatus;
             studentId: string;
             instructorId: string;
             vehicleId: string | null;
@@ -120,9 +120,9 @@ export declare class InstructorController {
         };
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.PaymentStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.PaymentStatus;
         lessonId: string;
         amount: import("@prisma/client/runtime/library").Decimal;
         currency: string;
@@ -137,8 +137,6 @@ export declare class InstructorController {
     getProfile(userId: string): Promise<{
         instructor: {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -147,24 +145,33 @@ export declare class InstructorController {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
     }>;
     getSchedule(instructorId: string): Promise<({
         student: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string | null;
             email: string;
             passwordHash: string;
             role: import("@prisma/client").$Enums.UserRole;
-            name: string | null;
             phone: string | null;
-            createdAt: Date;
-            updatedAt: Date;
         };
         payment: {
             id: string;
+            status: import("@prisma/client").$Enums.PaymentStatus;
             createdAt: Date;
             updatedAt: Date;
-            status: import("@prisma/client").$Enums.PaymentStatus;
             lessonId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
             currency: string;
@@ -173,9 +180,9 @@ export declare class InstructorController {
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;
@@ -191,8 +198,6 @@ export declare class InstructorController {
         message: string;
         instructor: {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -201,6 +206,15 @@ export declare class InstructorController {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
     }>;
 }

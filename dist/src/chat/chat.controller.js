@@ -29,7 +29,7 @@ let ChatController = class ChatController {
         return this.chatService.getMessages(chatId, req.user.id);
     }
     async getChatByLesson(lessonId, req) {
-        return this.chatService.getChatByLesson(lessonId);
+        return this.chatService.getChatByLesson(lessonId, req.user.id);
     }
     async canSendMessage(chatId, req) {
         const canSend = await this.chatService.canSendMessage(chatId, req.user.id);

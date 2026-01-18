@@ -21,13 +21,13 @@ export declare class AuthService {
     }>;
     validateUser(userId: string): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string | null;
         email: string;
         passwordHash: string;
         role: import("@prisma/client").$Enums.UserRole;
-        name: string | null;
         phone: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     } | null>;
     registerStudent(dto: RegisterStudentDto): Promise<{
         user: {

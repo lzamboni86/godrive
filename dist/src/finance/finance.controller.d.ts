@@ -7,13 +7,11 @@ export declare class FinanceController {
         instructor: {
             user: {
                 id: string;
-                email: string;
                 name: string | null;
+                email: string;
             };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -22,6 +20,15 @@ export declare class FinanceController {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
         reviews: ({
             student: {
@@ -29,18 +36,18 @@ export declare class FinanceController {
             };
         } & {
             id: string;
+            rating: number;
             createdAt: Date;
             updatedAt: Date;
             studentId: string;
             instructorId: string;
             lessonId: string;
-            rating: number;
             comment: string | null;
         })[];
         student: {
             id: string;
-            email: string;
             name: string | null;
+            email: string;
         };
         vehicle: {
             id: string;
@@ -51,13 +58,15 @@ export declare class FinanceController {
             model: string | null;
             year: number | null;
             plate: string | null;
+            transmission: import("@prisma/client").$Enums.Transmission;
+            engineType: import("@prisma/client").$Enums.EngineType;
             instructorId: string;
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;
@@ -73,18 +82,18 @@ export declare class FinanceController {
             };
         } & {
             id: string;
+            rating: number;
             createdAt: Date;
             updatedAt: Date;
             studentId: string;
             instructorId: string;
             lessonId: string;
-            rating: number;
             comment: string | null;
         })[];
         student: {
             id: string;
-            email: string;
             name: string | null;
+            email: string;
         };
         vehicle: {
             id: string;
@@ -95,13 +104,15 @@ export declare class FinanceController {
             model: string | null;
             year: number | null;
             plate: string | null;
+            transmission: import("@prisma/client").$Enums.Transmission;
+            engineType: import("@prisma/client").$Enums.EngineType;
             instructorId: string;
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;
@@ -117,18 +128,18 @@ export declare class FinanceController {
             };
         } & {
             id: string;
+            rating: number;
             createdAt: Date;
             updatedAt: Date;
             studentId: string;
             instructorId: string;
             lessonId: string;
-            rating: number;
             comment: string | null;
         })[];
         student: {
             id: string;
-            email: string;
             name: string | null;
+            email: string;
         };
         vehicle: {
             id: string;
@@ -139,13 +150,15 @@ export declare class FinanceController {
             model: string | null;
             year: number | null;
             plate: string | null;
+            transmission: import("@prisma/client").$Enums.Transmission;
+            engineType: import("@prisma/client").$Enums.EngineType;
             instructorId: string;
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;
@@ -158,13 +171,11 @@ export declare class FinanceController {
         instructor: {
             user: {
                 id: string;
-                email: string;
                 name: string | null;
+                email: string;
             };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -173,21 +184,30 @@ export declare class FinanceController {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
         reviews: {
             id: string;
+            rating: number;
             createdAt: Date;
             updatedAt: Date;
             studentId: string;
             instructorId: string;
             lessonId: string;
-            rating: number;
             comment: string | null;
         }[];
         student: {
             id: string;
-            email: string;
             name: string | null;
+            email: string;
         };
         vehicle: {
             id: string;
@@ -198,13 +218,15 @@ export declare class FinanceController {
             model: string | null;
             year: number | null;
             plate: string | null;
+            transmission: import("@prisma/client").$Enums.Transmission;
+            engineType: import("@prisma/client").$Enums.EngineType;
             instructorId: string;
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;
@@ -222,13 +244,11 @@ export declare class FinanceController {
         instructor: {
             user: {
                 id: string;
-                email: string;
                 name: string | null;
+                email: string;
             };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -237,21 +257,30 @@ export declare class FinanceController {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
         reviews: {
             id: string;
+            rating: number;
             createdAt: Date;
             updatedAt: Date;
             studentId: string;
             instructorId: string;
             lessonId: string;
-            rating: number;
             comment: string | null;
         }[];
         student: {
             id: string;
-            email: string;
             name: string | null;
+            email: string;
         };
         vehicle: {
             id: string;
@@ -262,13 +291,15 @@ export declare class FinanceController {
             model: string | null;
             year: number | null;
             plate: string | null;
+            transmission: import("@prisma/client").$Enums.Transmission;
+            engineType: import("@prisma/client").$Enums.EngineType;
             instructorId: string;
         } | null;
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.LessonStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.LessonStatus;
         studentId: string;
         instructorId: string;
         vehicleId: string | null;

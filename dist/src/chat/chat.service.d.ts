@@ -3,24 +3,23 @@ import { CreateMessageDto } from './dto/create-message.dto';
 export declare class ChatService {
     private prisma;
     constructor(prisma: PrismaService);
+    private assertUserCanAccessLesson;
     createChat(lessonId: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         lessonId: string;
     }>;
-    getChatByLesson(lessonId: string): Promise<({
+    getChatByLesson(lessonId: string, userId: string): Promise<{
         lesson: {
             instructor: {
                 user: {
                     id: string;
-                    email: string;
                     name: string | null;
+                    email: string;
                 };
             } & {
                 id: string;
-                createdAt: Date;
-                updatedAt: Date;
                 userId: string;
                 gender: import("@prisma/client").$Enums.Gender;
                 licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -29,17 +28,26 @@ export declare class ChatService {
                 pixKey: string | null;
                 averageRating: number | null;
                 totalReviews: number | null;
+                city: string | null;
+                state: string | null;
+                neighborhoodReside: string | null;
+                neighborhoodTeach: string | null;
+                bio: string | null;
+                completedLessonsCount: number;
+                rating: number;
+                createdAt: Date;
+                updatedAt: Date;
             };
             student: {
                 id: string;
-                email: string;
                 name: string | null;
+                email: string;
             };
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.LessonStatus;
             createdAt: Date;
             updatedAt: Date;
-            status: import("@prisma/client").$Enums.LessonStatus;
             studentId: string;
             instructorId: string;
             vehicleId: string | null;
@@ -51,9 +59,9 @@ export declare class ChatService {
         messages: ({
             sender: {
                 id: string;
+                name: string | null;
                 email: string;
                 role: import("@prisma/client").$Enums.UserRole;
-                name: string | null;
             };
         } & {
             id: string;
@@ -68,13 +76,13 @@ export declare class ChatService {
         createdAt: Date;
         updatedAt: Date;
         lessonId: string;
-    }) | null>;
+    }>;
     sendMessage(createMessageDto: CreateMessageDto, senderId: string): Promise<{
         sender: {
             id: string;
+            name: string | null;
             email: string;
             role: import("@prisma/client").$Enums.UserRole;
-            name: string | null;
         };
     } & {
         id: string;
@@ -87,9 +95,9 @@ export declare class ChatService {
     getMessages(chatId: string, userId: string): Promise<({
         sender: {
             id: string;
+            name: string | null;
             email: string;
             role: import("@prisma/client").$Enums.UserRole;
-            name: string | null;
         };
     } & {
         id: string;

@@ -20,31 +20,52 @@ let StudentService = class StudentService {
         this.prisma = prisma;
         this.mercadoPagoService = mercadoPagoService;
     }
-    async getApprovedInstructors() {
-        const instructors = await this.prisma.user.findMany({
-            where: {
-                role: 'INSTRUCTOR',
-                instructor: {
-                    status: 'APPROVED'
-                }
+    async getApprovedInstructors(filters) {
+        const where = {
+            instructor: {
+                status: 'APPROVED',
+                ...(filters?.state && { state: filters.state }),
+                ...(filters?.city && { city: filters.city }),
+                ...(filters?.neighborhoodTeach && { neighborhoodTeach: filters.neighborhoodTeach }),
+                ...(filters?.gender && { gender: filters.gender }),
+                vehicles: {
+                    some: {
+                        ...(filters?.transmission && { transmission: filters.transmission }),
+                        ...(filters?.engineType && { engineType: filters.engineType }),
+                    },
+                },
             },
+        };
+        const instructors = await this.prisma.user.findMany({
+            where,
             include: {
                 instructor: {
                     include: {
-                        vehicles: true
-                    }
-                }
-            }
+                        vehicles: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'asc',
+            },
         });
         return instructors.map(instructor => ({
             id: instructor.id,
-            name: instructor.email.split('@')[0],
+            name: instructor.name || instructor.email.split('@')[0],
             email: instructor.email,
-            phone: null,
+            phone: instructor.phone,
             status: instructor.instructor?.status || 'PENDING',
             vehicle: instructor.instructor?.vehicles?.[0] || null,
             cnh: instructor.instructor?.licenseCategories?.join(', ') || null,
             hourlyRate: instructor.instructor?.hourlyRate || 80.0,
+            state: instructor.instructor?.state,
+            city: instructor.instructor?.city,
+            neighborhoodReside: instructor.instructor?.neighborhoodReside,
+            neighborhoodTeach: instructor.instructor?.neighborhoodTeach,
+            gender: instructor.instructor?.gender,
+            completedLessonsCount: instructor.instructor?.completedLessonsCount,
+            rating: instructor.instructor?.rating ?? instructor.instructor?.averageRating,
+            bio: instructor.instructor?.bio,
             createdAt: instructor.createdAt.toISOString()
         }));
     }
@@ -90,7 +111,7 @@ let StudentService = class StudentService {
                     gte: now
                 },
                 status: {
-                    in: ['CONFIRMED', 'REQUESTED']
+                    in: ['PENDING_PAYMENT', 'WAITING_APPROVAL', 'CONFIRMED', 'REQUESTED']
                 }
             },
             include: {
@@ -185,8 +206,11 @@ let StudentService = class StudentService {
             studentId,
             lessonId: lesson.id,
             amount: lesson.payment?.amount.toNumber() || 80,
-            status: lesson.payment?.status === 'RELEASED' ? 'PAID' :
-                lesson.payment?.status === 'HELD' ? 'PENDING' : 'CANCELLED',
+            status: lesson.payment?.status === 'PAID' || lesson.payment?.status === 'RELEASED'
+                ? 'PAID'
+                : lesson.payment?.status === 'PENDING' || lesson.payment?.status === 'HELD'
+                    ? 'PENDING'
+                    : 'CANCELLED',
             paymentDate: lesson.payment?.releasedAt?.toISOString() || null,
             description: `Aula Prática #${lesson.id}`,
             createdAt: lesson.createdAt.toISOString()
@@ -252,11 +276,11 @@ let StudentService = class StudentService {
                             instructorId: instructor.id,
                             lessonDate: lessonDate,
                             lessonTime: lessonDate,
-                            status: 'REQUESTED',
+                            status: 'PENDING_PAYMENT',
                             payment: {
                                 create: {
                                     amount: lesson.price,
-                                    status: 'HELD',
+                                    status: 'PENDING',
                                     currency: 'BRL'
                                 }
                             }
@@ -275,8 +299,10 @@ let StudentService = class StudentService {
                 const student = await this.prisma.user.findUnique({
                     where: { id: scheduleRequest.studentId }
                 });
+                const lessonIds = lessons.map((l) => l.id);
                 const paymentData = {
-                    externalReference: lessons[0].id,
+                    externalReference: lessonIds.join(','),
+                    lessonIds,
                     payerEmail: student?.email || 'test_user@test.com',
                     payerName: student?.name || 'Aluno GoDrive',
                     payerDocument: '00000000000',
@@ -299,20 +325,17 @@ let StudentService = class StudentService {
                 });
                 return {
                     id: lessons[0].id,
+                    lessonIds,
                     preferenceId: mercadoPagoResponse.preferenceId,
                     initPoint: mercadoPagoResponse.initPoint,
                     sandboxInitPoint: mercadoPagoResponse.sandboxInitPoint,
+                    isSandbox: mercadoPagoResponse.isSandbox,
                     message: 'Solicitação criada com sucesso'
                 };
             }
             catch (mpError) {
                 console.error('❌ Erro ao criar preferência Mercado Pago:', mpError);
-                const preferenceId = `pref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                return {
-                    id: lessons[0].id,
-                    preferenceId,
-                    message: 'Solicitação criada com sucesso (pagamento simulado)'
-                };
+                throw mpError;
             }
         }
         catch (error) {

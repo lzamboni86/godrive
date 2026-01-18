@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const mercadopago_1 = require("mercadopago");
 let MercadoPagoService = class MercadoPagoService {
     client;
+    isSandbox;
     constructor() {
         const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
         console.log('💳 [MP] Inicializando MercadoPagoService');
@@ -22,9 +23,9 @@ let MercadoPagoService = class MercadoPagoService {
         if (!accessToken) {
             throw new Error('MERCADO_PAGO_ACCESS_TOKEN não configurado');
         }
-        this.client = new mercadopago_1.Preference({
-            accessToken
-        });
+        this.isSandbox = accessToken.startsWith('TEST-');
+        const sdkClient = new mercadopago_1.MercadoPagoConfig({ accessToken });
+        this.client = new mercadopago_1.Preference(sdkClient);
     }
     async createPaymentPreference(data) {
         try {
@@ -60,6 +61,9 @@ let MercadoPagoService = class MercadoPagoService {
                     unit_price: unitPrice
                 };
             });
+            const backendUrl = process.env.BACKEND_URL;
+            const frontendUrl = process.env.FRONTEND_URL;
+            const returnBaseUrl = frontendUrl || backendUrl;
             const preferenceBody = {
                 items,
                 payer: {
@@ -67,14 +71,18 @@ let MercadoPagoService = class MercadoPagoService {
                 },
                 external_reference: data.externalReference,
                 statement_descriptor: 'GoDrive Aulas',
-                notification_url: `${process.env.BACKEND_URL}/webhooks/mercadopago`,
-                back_urls: {
-                    success: `${process.env.FRONTEND_URL}/schedule/success`,
-                    failure: `${process.env.FRONTEND_URL}/schedule/failure`,
-                    pending: `${process.env.FRONTEND_URL}/schedule/pending`
-                },
                 auto_return: 'approved'
             };
+            if (backendUrl) {
+                preferenceBody.notification_url = `${backendUrl}/webhooks/mercadopago`;
+            }
+            if (returnBaseUrl) {
+                preferenceBody.back_urls = {
+                    success: `${returnBaseUrl}/schedule/success`,
+                    failure: `${returnBaseUrl}/schedule/failure`,
+                    pending: `${returnBaseUrl}/schedule/pending`,
+                };
+            }
             console.log('💳 [MP] Payload enviado ao Mercado Pago:', JSON.stringify(preferenceBody, null, 2));
             const preference = await this.client.create({
                 body: preferenceBody
@@ -87,7 +95,8 @@ let MercadoPagoService = class MercadoPagoService {
             return {
                 preferenceId: preference.id,
                 initPoint: preference.init_point,
-                sandboxInitPoint: preference.sandbox_init_point
+                sandboxInitPoint: preference.sandbox_init_point,
+                isSandbox: this.isSandbox
             };
         }
         catch (error) {

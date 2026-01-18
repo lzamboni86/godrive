@@ -7,7 +7,16 @@ class RegisterInstructorDto {
     phone;
     cnh;
     vehicleModel;
+    vehicleMake;
+    vehicleYear;
+    transmission;
+    engineType;
     vehiclePlate;
+    state;
+    city;
+    neighborhoodReside;
+    neighborhoodTeach;
+    gender;
     hourlyRate;
     password;
 }

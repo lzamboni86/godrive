@@ -7,18 +7,16 @@ export declare class ReviewService {
         instructor: {
             user: {
                 id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                name: string | null;
                 email: string;
                 passwordHash: string;
                 role: import("@prisma/client").$Enums.UserRole;
-                name: string | null;
                 phone: string | null;
-                createdAt: Date;
-                updatedAt: Date;
             };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -27,20 +25,29 @@ export declare class ReviewService {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
         student: {
             id: string;
-            email: string;
             name: string | null;
+            email: string;
         };
     } & {
         id: string;
+        rating: number;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
         instructorId: string;
         lessonId: string;
-        rating: number;
         comment: string | null;
     }>;
     updateInstructorRating(instructorId: string): Promise<void>;
@@ -52,30 +59,28 @@ export declare class ReviewService {
         };
         student: {
             id: string;
-            email: string;
             name: string | null;
+            email: string;
         };
     } & {
         id: string;
+        rating: number;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
         instructorId: string;
         lessonId: string;
-        rating: number;
         comment: string | null;
     })[]>;
     getLessonReview(lessonId: string, studentId: string): Promise<({
         instructor: {
             user: {
                 id: string;
-                email: string;
                 name: string | null;
+                email: string;
             };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             userId: string;
             gender: import("@prisma/client").$Enums.Gender;
             licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -84,25 +89,34 @@ export declare class ReviewService {
             pixKey: string | null;
             averageRating: number | null;
             totalReviews: number | null;
+            city: string | null;
+            state: string | null;
+            neighborhoodReside: string | null;
+            neighborhoodTeach: string | null;
+            bio: string | null;
+            completedLessonsCount: number;
+            rating: number;
+            createdAt: Date;
+            updatedAt: Date;
         };
     } & {
         id: string;
+        rating: number;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
         instructorId: string;
         lessonId: string;
-        rating: number;
         comment: string | null;
     }) | null>;
     getInstructorStats(instructorId: string): Promise<{
         instructor: {
-            user: {
-                email: string;
-                name: string | null;
-            };
             averageRating: number | null;
             totalReviews: number | null;
+            user: {
+                name: string | null;
+                email: string;
+            };
         } | null;
         ratingDistribution: {
             rating: number;

@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePaymentDto = void 0;
 class CreatePaymentDto {
     externalReference;
+    lessonIds;
     payerEmail;
     payerName;
     payerDocument;

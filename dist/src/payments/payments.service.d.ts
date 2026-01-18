@@ -4,9 +4,9 @@ export declare class PaymentsService {
     constructor(prisma: PrismaService);
     releasePayment(lessonId: string): Promise<{
         id: string;
+        status: import("@prisma/client").$Enums.PaymentStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.PaymentStatus;
         lessonId: string;
         amount: import("@prisma/client/runtime/library").Decimal;
         currency: string;
@@ -20,18 +20,16 @@ export declare class PaymentsService {
             instructor: {
                 user: {
                     id: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    name: string | null;
                     email: string;
                     passwordHash: string;
                     role: import("@prisma/client").$Enums.UserRole;
-                    name: string | null;
                     phone: string | null;
-                    createdAt: Date;
-                    updatedAt: Date;
                 };
             } & {
                 id: string;
-                createdAt: Date;
-                updatedAt: Date;
                 userId: string;
                 gender: import("@prisma/client").$Enums.Gender;
                 licenseCategories: import("@prisma/client").$Enums.LicenseCategory[];
@@ -40,22 +38,31 @@ export declare class PaymentsService {
                 pixKey: string | null;
                 averageRating: number | null;
                 totalReviews: number | null;
-            };
-            student: {
-                id: string;
-                email: string;
-                passwordHash: string;
-                role: import("@prisma/client").$Enums.UserRole;
-                name: string | null;
-                phone: string | null;
+                city: string | null;
+                state: string | null;
+                neighborhoodReside: string | null;
+                neighborhoodTeach: string | null;
+                bio: string | null;
+                completedLessonsCount: number;
+                rating: number;
                 createdAt: Date;
                 updatedAt: Date;
             };
+            student: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                name: string | null;
+                email: string;
+                passwordHash: string;
+                role: import("@prisma/client").$Enums.UserRole;
+                phone: string | null;
+            };
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.LessonStatus;
             createdAt: Date;
             updatedAt: Date;
-            status: import("@prisma/client").$Enums.LessonStatus;
             studentId: string;
             instructorId: string;
             vehicleId: string | null;
@@ -66,9 +73,9 @@ export declare class PaymentsService {
         };
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.PaymentStatus;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.PaymentStatus;
         lessonId: string;
         amount: import("@prisma/client/runtime/library").Decimal;
         currency: string;

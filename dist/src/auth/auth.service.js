@@ -139,23 +139,32 @@ let AuthService = class AuthService {
                 email: dto.email,
                 passwordHash: hashedPassword,
                 role: 'INSTRUCTOR',
+                name: dto.name,
+                phone: dto.phone,
             },
         });
         const instructor = await this.prisma.instructor.create({
             data: {
                 userId: user.id,
-                gender: 'UNDISCLOSED',
+                gender: dto.gender || 'UNDISCLOSED',
                 licenseCategories: ['B'],
                 hourlyRate: dto.hourlyRate || 80.0,
+                state: dto.state,
+                city: dto.city,
+                neighborhoodReside: dto.neighborhoodReside,
+                neighborhoodTeach: dto.neighborhoodTeach,
             },
         });
         const vehicle = await this.prisma.vehicle.create({
             data: {
                 instructorId: instructor.id,
                 type: 'MANUAL',
-                make: dto.vehicleModel.split(' ')[0],
+                make: dto.vehicleMake || (dto.vehicleModel ? dto.vehicleModel.split(' ')[0] : null),
                 model: dto.vehicleModel,
+                year: dto.vehicleYear,
                 plate: dto.vehiclePlate,
+                transmission: dto.transmission || 'MANUAL',
+                engineType: dto.engineType || 'COMBUSTION',
             },
         });
         return {
