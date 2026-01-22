@@ -112,4 +112,59 @@ export class LessonsService {
 
     return lesson;
   }
+
+  // Método de teste para criar aula diretamente (sem Mercado Pago)
+  async createTestLesson(data: {
+    studentId: string;
+    instructorId: string;
+    lessonDate: string;
+    lessonTime: string;
+    price: number;
+  }) {
+    console.log('🧪 [TEST] Criando aula de teste:', data);
+    
+    // Buscar o instructor pelo userId
+    const instructor = await this.prisma.instructor.findFirst({
+      where: { userId: data.instructorId }
+    });
+    
+    if (!instructor) {
+      throw new Error('Instrutor não encontrado');
+    }
+    
+    // Converter data e hora
+    const [hours, minutes] = data.lessonTime.split(':');
+    const lessonDate = new Date(data.lessonDate);
+    lessonDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    const lesson = await this.prisma.lesson.create({
+      data: {
+        studentId: data.studentId,
+        instructorId: instructor.id,
+        lessonDate: lessonDate,
+        lessonTime: lessonDate,
+        status: 'PENDING_PAYMENT',
+        payment: {
+          create: {
+            amount: data.price,
+            status: 'PENDING',
+            currency: 'BRL',
+            mercadoPagoId: `TEST_MP_${Date.now()}`,
+            mercadoPagoStatus: 'pending',
+            mercadoPagoPaymentId: `TEST_PAY_${Date.now()}`
+          }
+        }
+      },
+      include: {
+        payment: true,
+        student: true,
+        instructor: {
+          include: { user: true }
+        }
+      }
+    });
+    
+    console.log('🧪 [TEST] Aula criada:', lesson.id);
+    return lesson;
+  }
 }

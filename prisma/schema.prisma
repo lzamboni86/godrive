@@ -83,6 +83,8 @@ model User {
   phone        String?
 
   instructor Instructor?
+  passwordResets PasswordReset[]
+  dataExportRequests DataExportRequest[]
 
   studentLessons Lesson[] @relation("LessonStudent")
   sentMessages  Message[] @relation("MessageSender")
@@ -197,12 +199,23 @@ model Payment {
   amount   Decimal @db.Decimal(10, 2)
   currency String  @default("BRL")
 
+  // Mercado Pago fields
+  mercadoPagoId        String?   // ID da transação no Mercado Pago
+  mercadoPagoStatus    String?   // Status da transação no Mercado Pago
+  mercadoPagoPaymentId String?   // ID do pagamento no Mercado Pago
+  mercadoPagoPreferenceId String? // ID da preferência de pagamento
+  mercadoPagoMerchantOrderId String? // Order ID do Mercado Pago
+  mercadoPagoApprovedAt DateTime? // Data de aprovação no Mercado Pago
+  mercadoPagoNotificationUrl String? // URL de notificação usada
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   releasedAt DateTime?
   refundedAt DateTime?
 
   @@index([status])
+  @@index([mercadoPagoId])
+  @@index([mercadoPagoPaymentId])
 }
 
 model Chat {
@@ -260,4 +273,55 @@ model Review {
   @@index([studentId])
   @@index([instructorId])
   @@index([rating])
+}
+
+model PasswordReset {
+  id String @id @default(cuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  token String @unique
+
+  expiresAt DateTime
+
+  used Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([token])
+  @@index([userId])
+}
+
+model SecurityLog {
+  id String @id @default(cuid())
+
+  userId String?
+  action String
+  details String?
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model DataExportRequest {
+  id String @id @default(cuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status String @default("PENDING")
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }

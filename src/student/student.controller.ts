@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, UseGuards, Query, Req } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { StudentService } from './student.service';
 import { ContactForm } from './dto/contact-form.dto';
@@ -29,37 +29,81 @@ export class StudentController {
   }
 
   @Get('lessons/student/:id')
-  async getStudentLessons(@Param('id') studentId: string) {
+  @UseGuards(JwtAuthGuard)
+  async getStudentLessons(@Req() req: any, @Param('id') studentId: string) {
+    // Verificar se o usuário tem permissão para ver as aulas
+    const userId = req.user.sub || req.user.id;
+    if (userId !== studentId) {
+      throw new Error('Não autorizado');
+    }
     return this.studentService.getStudentLessons(studentId);
   }
 
   @Get('lessons/student/:id/upcoming')
-  async getUpcomingLessons(@Param('id') studentId: string) {
+  @UseGuards(JwtAuthGuard)
+  async getUpcomingLessons(@Req() req: any, @Param('id') studentId: string) {
+    // Verificar se o usuário tem permissão para ver as aulas
+    const userId = req.user.sub || req.user.id;
+    if (userId !== studentId) {
+      throw new Error('Não autorizado');
+    }
     return this.studentService.getUpcomingLessons(studentId);
   }
 
   @Get('lessons/student/:id/past')
-  async getPastLessons(@Param('id') studentId: string) {
+  @UseGuards(JwtAuthGuard)
+  async getPastLessons(@Req() req: any, @Param('id') studentId: string) {
+    // Verificar se o usuário tem permissão para ver as aulas
+    const userId = req.user.sub || req.user.id;
+    if (userId !== studentId) {
+      throw new Error('Não autorizado');
+    }
     return this.studentService.getPastLessons(studentId);
   }
 
   @Get('payments/student/:id')
-  async getStudentPayments(@Param('id') studentId: string) {
+  @UseGuards(JwtAuthGuard)
+  async getStudentPayments(@Req() req: any, @Param('id') studentId: string) {
+    // Verificar se o usuário tem permissão para ver os pagamentos
+    const userId = req.user.sub || req.user.id;
+    if (userId !== studentId) {
+      throw new Error('Não autorizado');
+    }
     return this.studentService.getStudentPayments(studentId);
   }
 
   @Get('payments/student/:id/summary')
-  async getPaymentSummary(@Param('id') studentId: string) {
+  @UseGuards(JwtAuthGuard)
+  async getPaymentSummary(@Req() req: any, @Param('id') studentId: string) {
+    // Verificar se o usuário tem permissão para ver o resumo
+    const userId = req.user.sub || req.user.id;
+    if (userId !== studentId) {
+      throw new Error('Não autorizado');
+    }
     return this.studentService.getPaymentSummary(studentId);
   }
 
   @Post('contact')
-  async sendContactForm(@Body() contactForm: ContactForm) {
-    return this.studentService.sendContactForm(contactForm);
+  @UseGuards(JwtAuthGuard)
+  async sendContactForm(@Req() req: any, @Body() contactForm: ContactForm) {
+    // Adicionar informações do usuário ao formulário de contato
+    const enrichedContactForm = {
+      ...contactForm,
+      userId: req.user.sub || req.user.id,
+      userType: 'STUDENT'
+    };
+    return this.studentService.sendContactForm(enrichedContactForm);
   }
 
   @Post('schedule')
   async createScheduleRequest(@Body() scheduleRequest: ScheduleRequestDto) {
     return this.studentService.createScheduleRequest(scheduleRequest);
+  }
+
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(@Req() req: any, @Body() updateData: { name: string; email: string; phone?: string }) {
+    const userId = req.user.sub || req.user.id;
+    return this.studentService.updateProfile(userId, updateData);
   }
 }

@@ -1,6 +1,7 @@
-import { Controller, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Param, Body, UseGuards, Req } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { InstructorService } from './instructor.service';
+import { ContactForm } from '../student/dto/contact-form.dto';
 
 @Controller('instructor')
 @UseGuards(JwtAuthGuard)
@@ -45,5 +46,17 @@ export class InstructorController {
   @Patch(':id/profile')
   async updateProfile(@Param('id') instructorId: string, @Body() data: { hourlyRate?: number; pixKey?: string }) {
     return this.instructorService.updateProfile(instructorId, data);
+  }
+
+  @Post('contact')
+  @UseGuards(JwtAuthGuard)
+  async sendContactForm(@Req() req: any, @Body() contactForm: ContactForm) {
+    // Adicionar informações do usuário ao formulário de contato
+    const enrichedContactForm = {
+      ...contactForm,
+      userId: req.user.sub || req.user.id,
+      userType: 'INSTRUCTOR'
+    };
+    return this.instructorService.sendContactForm(enrichedContactForm);
   }
 }

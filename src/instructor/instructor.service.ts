@@ -58,7 +58,26 @@ export class InstructorService {
     }
     
     console.log(`📋 Encontradas ${requests.length} solicitações para instrutor ${instructorId}`);
-    return requests;
+    
+    // Formatar os dados para garantir consistência nos horários
+    return requests.map(request => {
+      // Garantir que o horário seja formatado corretamente
+      const lessonTime = request.lessonTime.toISOString();
+      
+      return {
+        ...request,
+        lessonDate: request.lessonDate.toISOString(),
+        lessonTime: lessonTime,
+        // Garantir que o student tenha os dados corretos
+        student: request.student ? {
+          ...request.student,
+          user: {
+            name: request.student.name || request.student.email?.split('@')[0] || 'Aluno',
+            email: request.student.email
+          }
+        } : null
+      };
+    });
   }
 
   async approveRequest(requestId: string) {
@@ -261,6 +280,17 @@ export class InstructorService {
     return {
       message: 'Perfil atualizado com sucesso',
       instructor: updatedInstructor
+    };
+  }
+
+  async sendContactForm(contactForm: any) {
+    console.log('📧 [INSTRUCTOR] Enviando formulário de contato:', contactForm);
+    
+    // Aqui você poderia salvar no banco, enviar e-mail, etc.
+    // Por enquanto, apenas simulamos o envio
+    return {
+      message: 'Formulário de contato enviado com sucesso',
+      contactForm
     };
   }
 }

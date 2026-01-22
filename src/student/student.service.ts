@@ -3,11 +3,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ContactForm } from './dto/contact-form.dto';
 import { ScheduleRequestDto } from './dto/schedule-request.dto';
 import { MercadoPagoService } from '../payments/mercado-pago.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class StudentService {
   constructor(
     private prisma: PrismaService,
+    private emailService: EmailService,
     private mercadoPagoService: MercadoPagoService
   ) {}
 
@@ -246,23 +248,28 @@ export class StudentService {
     };
   }
 
-  async sendContactForm(contactForm: ContactForm) {
+  async sendContactForm(contactForm: any) {
     try {
-      // Log do formulário recebido (em produção, enviar email)
-      console.log('Formulário de contato recebido:', contactForm);
+      console.log(' Enviando formulário de contato:', contactForm);
       
-      // Aqui você implementaria o envio de email
-      // Por enquanto, apenas salvamos no console
+      // Enviar e-mail usando o EmailService
+      const emailResult = await this.emailService.sendContactEmail(contactForm);
       
-      return { message: 'Formulário enviado com sucesso' };
+      console.log(' Formulário enviado:', emailResult);
+      
+      return { 
+        message: 'Formulário enviado com sucesso',
+        emailSent: emailResult.success
+      };
     } catch (error) {
-      console.error('Erro ao enviar formulário de contato:', error);
+      console.error(' Erro ao enviar formulário de contato:', error);
       throw new Error('Não foi possível enviar o formulário. Tente novamente.');
     }
   }
 
   async createScheduleRequest(scheduleRequest: ScheduleRequestDto) {
     try {
+      console.log(' Criando agendamento:', scheduleRequest);
       console.log('📅 Criando agendamento:', scheduleRequest);
       
       // Buscar o instructorId correto a partir do userId com hourlyRate
@@ -389,6 +396,64 @@ export class StudentService {
       }
       
       throw new Error(`Não foi possível criar a solicitação: ${error.message}`);
+    }
+  }
+
+  async updateProfile(userId: string, updateData: { name: string; email: string; phone?: string }) {
+    try {
+      console.log('👤 [STUDENT] Atualizando perfil do usuário:', userId);
+      console.log('👤 [STUDENT] Dados recebidos:', updateData);
+      
+      // Verificar se o usuário existe
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        console.error('❌ [STUDENT] Usuário não encontrado:', userId);
+        throw new Error('Usuário não encontrado');
+      }
+
+      console.log('✅ [STUDENT] Usuário encontrado:', user.email);
+
+      // Verificar se o email já está em uso por outro usuário
+      if (updateData.email && updateData.email !== user.email) {
+        console.log('🔍 [STUDENT] Verificando email duplicado:', updateData.email);
+        const existingUser = await this.prisma.user.findUnique({
+          where: { email: updateData.email }
+        });
+
+        if (existingUser) {
+          console.error('❌ [STUDENT] Email já em uso:', updateData.email);
+          throw new Error('Este e-mail já está em uso por outra conta');
+        }
+      }
+
+      // Atualizar o usuário
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          name: updateData.name,
+          email: updateData.email,
+          phone: updateData.phone || null
+        }
+      });
+
+      console.log('✅ [STUDENT] Perfil atualizado com sucesso:', updatedUser.id);
+      
+      return {
+        message: 'Perfil atualizado com sucesso',
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          phone: updatedUser.phone
+        }
+      };
+    } catch (error) {
+      console.error('❌ [STUDENT] Erro ao atualizar perfil:', error);
+      console.error('❌ [STUDENT] Stack trace:', error.stack);
+      throw error;
     }
   }
 }

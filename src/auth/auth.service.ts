@@ -5,13 +5,21 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterStudentDto } from './dto/register-student.dto';
 import { RegisterInstructorDto } from './dto/register-instructor.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
+
+  private isDeletedAccount(user: { passwordHash: string; email: string }) {
+    if (user.passwordHash === 'DELETED') return true;
+    if (user.email?.startsWith('deleted_') && user.email?.endsWith('@anonimizado.godrive.com')) return true;
+    return false;
+  }
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
@@ -21,6 +29,10 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Email ou senha inválidos');
+    }
+
+    if (this.isDeletedAccount(user)) {
+      throw new UnauthorizedException('Esta conta foi excluída.');
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
@@ -52,9 +64,13 @@ export class AuthService {
   }
 
   async validateUser(userId: string) {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
+
+    if (!user) return null;
+    if (this.isDeletedAccount(user)) return null;
+    return user;
   }
 
   async registerStudent(dto: RegisterStudentDto) {
@@ -246,9 +262,13 @@ export class AuthService {
   }
 
   async approveInstructor(id: string) {
-    // Como não temos campo status no schema ainda, vamos apenas simular aprovação
-    // Futuro: adicionar campo status no Instructor model
     console.log('🔍 [DEBUG] Aprovando instrutor:', id);
+    
+    // Atualizar o status do instrutor para APPROVED
+    await this.prisma.instructor.update({
+      where: { userId: id },
+      data: { status: 'APPROVED' }
+    });
     
     return { message: 'Instrutor aprovado com sucesso', instructorId: id };
   }
@@ -262,5 +282,57 @@ export class AuthService {
     });
 
     return { message: 'Instrutor rejeitado com sucesso', instructorId: id };
+  }
+
+  async forgotPassword(email: string) {
+    console.log('📧 [AUTH] Solicitação de recuperação de senha para:', email);
+
+    try {
+      // Gerar token
+      const token = await this.mailService.generatePasswordResetToken(email);
+      
+      // Enviar e-mail
+      await this.mailService.sendPasswordResetEmail(email, token);
+      
+      return {
+        message: 'Se o e-mail existir em nossa base, você receberá um link para redefinir sua senha',
+      };
+    } catch (error) {
+      console.error('📧 [AUTH] Erro na recuperação de senha:', error);
+      // Por segurança, sempre retornamos sucesso mesmo que o email não exista
+      return {
+        message: 'Se o e-mail existir em nossa base, você receberá um link para redefinir sua senha',
+      };
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    console.log('📧 [AUTH] Tentativa de reset de senha com token');
+
+    try {
+      // Validar token
+      const user = await this.mailService.validatePasswordResetToken(token);
+      
+      // Hash da nova senha
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      
+      // Atualizar senha do usuário
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash },
+      });
+      
+      // Marcar token como usado
+      await this.mailService.markTokenAsUsed(token);
+      
+      console.log('📧 [AUTH] Senha redefinida com sucesso para usuário:', user.id);
+      
+      return {
+        message: 'Senha redefinida com sucesso! Você já pode fazer login com sua nova senha.',
+      };
+    } catch (error) {
+      console.error('📧 [AUTH] Erro no reset de senha:', error);
+      throw new UnauthorizedException('Token inválido ou expirado. Por favor, solicite uma nova recuperação de senha.');
+    }
   }
 }

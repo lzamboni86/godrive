@@ -22,6 +22,11 @@ export class AdminController {
     return this.adminService.getDashboard();
   }
 
+  @Get('payments')
+  async getPayments() {
+    return this.adminService.getPayments();
+  }
+
   @Post('instructors/:id/approve')
   async approveInstructor(@Param('id') id: string) {
     return this.adminService.approveInstructor(id);
@@ -30,5 +35,20 @@ export class AdminController {
   @Post('instructors/:id/reject')
   async rejectInstructor(@Param('id') id: string) {
     return this.adminService.rejectInstructor(id);
+  }
+
+  @Post('payments/:id/process')
+  async processPayment(@Param('id') id: string) {
+    return this.adminService.processPayment(id);
+  }
+
+  @Post('payments/:id/invoice')
+  async generateInvoice(@Param('id') id: string) {
+    return this.adminService.generateInvoice(id);
+  }
+
+  @Get('logs')
+  async getLogs() {
+    return this.adminService.getLogs();
   }
 }

@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "GoDrive",
+    "slug": "godrive",
+    "version": "1.0.0",
+    "ios": {
+      "bundleIdentifier": "com.luiszamboni.godrive",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a1163517-b2d0-46ed-9f3d-e84cb7f72ad2"
+      }
+    },
+    "android": {
+      "package": "com.luiszamboni.godrive"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Param, Body } from '@nestjs/common';
 import { LessonsService } from './lessons.service';
 
 @Controller('lessons')
@@ -23,5 +23,17 @@ export class LessonsController {
   @Patch(':id')
   async updateStatus(@Param('id') id: string, @Body() body: { status: string }) {
     return this.lessonsService.updateStatus(id, body.status);
+  }
+
+  // Endpoint de teste para criar aula diretamente (sem Mercado Pago)
+  @Post('test-create')
+  async testCreate(@Body() body: {
+    studentId: string;
+    instructorId: string;
+    lessonDate: string;
+    lessonTime: string;
+    price: number;
+  }) {
+    return this.lessonsService.createTestLesson(body);
   }
 }
