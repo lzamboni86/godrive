@@ -399,7 +399,7 @@ export class StudentService {
     }
   }
 
-  async updateProfile(userId: string, updateData: { name: string; email: string; phone?: string }) {
+  async updateProfile(userId: string, updateData: { name: string; email: string; phone?: string; avatar?: string }) {
     try {
       console.log('👤 [STUDENT] Atualizando perfil do usuário:', userId);
       console.log('👤 [STUDENT] Dados recebidos:', updateData);
@@ -435,7 +435,8 @@ export class StudentService {
         data: {
           name: updateData.name,
           email: updateData.email,
-          phone: updateData.phone || null
+          phone: updateData.phone || null,
+          avatar: updateData.avatar || null
         }
       });
 
@@ -447,7 +448,8 @@ export class StudentService {
           id: updatedUser.id,
           name: updatedUser.name,
           email: updatedUser.email,
-          phone: updatedUser.phone
+          phone: updatedUser.phone,
+          avatar: updatedUser.avatar
         }
       };
     } catch (error) {

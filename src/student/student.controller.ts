@@ -1,8 +1,13 @@
-import { Controller, Get, Post, Put, Param, Body, UseGuards, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, UseGuards, Query, Req, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { StudentService } from './student.service';
 import { ContactForm } from './dto/contact-form.dto';
 import { ScheduleRequestDto } from './dto/schedule-request.dto';
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { join } from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import type { Express } from 'express';
 
 @Controller('student')
 @UseGuards(JwtAuthGuard)
@@ -100,9 +105,58 @@ export class StudentController {
     return this.studentService.createScheduleRequest(scheduleRequest);
   }
 
+  @Post('upload-avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+      },
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/image\/(jpeg|jpg|png|webp)/)) {
+          return cb(new BadRequestException('Apenas imagens (JPEG, PNG, WebP) são permitidas.'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadAvatar(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
+    const userId = req.user.sub || req.user.id;
+
+    if (!file) {
+      throw new BadRequestException('Nenhum arquivo enviado.');
+    }
+
+    try {
+      // Garante que o diretório de uploads exista
+      const uploadDir = join(process.cwd(), 'uploads', 'avatars');
+      if (!existsSync(uploadDir)) {
+        mkdirSync(uploadDir, { recursive: true });
+      }
+
+      // Gera nome único para o arquivo
+      const fileExtension = file.originalname.split('.').pop() || 'jpg';
+      const fileName = `${userId}_${uuidv4()}.${fileExtension}`;
+      const filePath = join(uploadDir, fileName);
+
+      // Salva o arquivo no disco
+      writeFileSync(filePath, file.buffer);
+
+      // Gera URL pública
+      const baseUrl = process.env.API_BASE_URL || 'https://godrive-7j7x.onrender.com';
+      const publicUrl = `${baseUrl}/uploads/avatars/${fileName}`;
+
+      return {
+        url: publicUrl,
+        message: 'Avatar enviado com sucesso.',
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Falha ao salvar avatar.');
+    }
+  }
+
   @Put('profile')
   @UseGuards(JwtAuthGuard)
-  async updateProfile(@Req() req: any, @Body() updateData: { name: string; email: string; phone?: string }) {
+  async updateProfile(@Req() req: any, @Body() updateData: { name: string; email: string; phone?: string; avatar?: string }) {
     const userId = req.user.sub || req.user.id;
     return this.studentService.updateProfile(userId, updateData);
   }

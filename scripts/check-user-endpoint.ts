@@ -22,6 +22,28 @@ async function checkUser() {
 
     if (!user) {
       console.log('❌ Usuário não encontrado no banco');
+      
+      // Criar usuário se não existir
+      console.log('🔧 Criando usuário...');
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      const newUser = await prisma.user.create({
+        data: {
+          email,
+          passwordHash: hashedPassword,
+          name: 'Luiz Henrique Zamboni',
+          role: 'STUDENT',
+          phone: null
+        }
+      });
+      
+      console.log('✅ Usuário criado com sucesso:');
+      console.log('- ID:', newUser.id);
+      console.log('- Email:', newUser.email);
+      console.log('- Nome:', newUser.name);
+      console.log('- Role:', newUser.role);
+      console.log('- Criado em:', newUser.createdAt);
+      
       return;
     }
 
@@ -30,14 +52,13 @@ async function checkUser() {
     console.log('- Nome:', user.name);
     console.log('- Role:', user.role);
     console.log('- Criado em:', user.createdAt);
-    console.log('- Avatar:', (user as any).avatar || 'N/A');
 
     // Verificar se a senha bate
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     console.log('- Senha válida:', isPasswordValid ? '✅' : '❌');
 
     if (!isPasswordValid) {
-      console.log('🔐 Senha incorreta. Queremos atualizar a senha?');
+      console.log('🔐 Senha incorreta. Atualizando...');
       
       // Atualizar senha
       const newPasswordHash = await bcrypt.hash(password, 10);

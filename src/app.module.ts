@@ -16,9 +16,10 @@ import { ReviewModule } from './reviews/review.module';
 import { FinanceModule } from './finance/finance.module';
 import { MailModule } from './mail/mail.module';
 import { UsersModule } from './users/users.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
-  imports: [PrismaModule, PaymentsModule, AuthModule, LessonsModule, AdminModule, StudentModule, PaymentModule, InstructorModule, WebhooksModule, ChatModule, ReviewModule, FinanceModule, MailModule, UsersModule],
+  imports: [PrismaModule, PaymentsModule, AuthModule, LessonsModule, AdminModule, StudentModule, PaymentModule, InstructorModule, WebhooksModule, ChatModule, ReviewModule, FinanceModule, MailModule, UsersModule, UploadModule],
   controllers: [AppController, HealthController],
   providers: [AppService],
 })

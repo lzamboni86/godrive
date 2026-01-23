@@ -243,13 +243,16 @@ export class InstructorService {
     return schedule;
   }
 
-  async updateProfile(instructorId: string, data: { hourlyRate?: number; pixKey?: string }) {
+  async updateProfile(instructorId: string, data: { name?: string; email?: string; phone?: string; avatar?: string; hourlyRate?: number; pixKey?: string }) {
     console.log('🔧 [INSTRUCTOR] Atualizando perfil:', instructorId, data);
 
     // Buscar o instrutor pelo userId
     const instructor = await this.prisma.instructor.findFirst({
       where: {
         userId: instructorId
+      },
+      include: {
+        user: true
       }
     });
 
@@ -259,7 +262,24 @@ export class InstructorService {
 
     // Atualizar apenas os campos fornecidos
     const updateData: any = {};
+    const userUpdateData: any = {};
     
+    if (data.name !== undefined) {
+      userUpdateData.name = data.name;
+    }
+
+    if (data.email !== undefined) {
+      userUpdateData.email = data.email;
+    }
+
+    if (data.phone !== undefined) {
+      userUpdateData.phone = data.phone;
+    }
+
+    if (data.avatar !== undefined) {
+      userUpdateData.avatar = data.avatar;
+    }
+
     if (data.hourlyRate !== undefined) {
       updateData.hourlyRate = data.hourlyRate;
     }
@@ -268,12 +288,27 @@ export class InstructorService {
       updateData.pixKey = data.pixKey;
     }
 
-    const updatedInstructor = await this.prisma.instructor.update({
-      where: {
-        id: instructor.id
-      },
-      data: updateData
-    });
+    // Atualizar o usuário se houver campos para atualizar
+    if (Object.keys(userUpdateData).length > 0) {
+      await this.prisma.user.update({
+        where: { id: instructor.userId },
+        data: userUpdateData
+      });
+    }
+
+    // Atualizar o instrutor se houver campos para atualizar
+    let updatedInstructor = instructor;
+    if (Object.keys(updateData).length > 0) {
+      updatedInstructor = await this.prisma.instructor.update({
+        where: {
+          id: instructor.id
+        },
+        data: updateData,
+        include: {
+          user: true
+        }
+      });
+    }
 
     console.log('✅ [INSTRUCTOR] Perfil atualizado:', updatedInstructor);
 
