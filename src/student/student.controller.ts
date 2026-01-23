@@ -91,13 +91,28 @@ export class StudentController {
   @Post('contact')
   @UseGuards(JwtAuthGuard)
   async sendContactForm(@Req() req: any, @Body() contactForm: ContactForm) {
+    console.log('📧 [STUDENT-CONTROLLER] Recebendo formulário de contato');
+    console.log('📧 [STUDENT-CONTROLLER] User ID:', req.user?.sub || req.user?.id);
+    console.log('📧 [STUDENT-CONTROLLER] Formulário recebido:', contactForm);
+    
     // Adicionar informações do usuário ao formulário de contato
     const enrichedContactForm = {
       ...contactForm,
       userId: req.user.sub || req.user.id,
       userType: 'STUDENT'
     };
-    return this.studentService.sendContactForm(enrichedContactForm);
+    
+    console.log('📧 [STUDENT-CONTROLLER] Formulário enriquecido:', enrichedContactForm);
+    console.log('📧 [STUDENT-CONTROLLER] Chamando studentService.sendContactForm...');
+    
+    try {
+      const result = await this.studentService.sendContactForm(enrichedContactForm);
+      console.log('✅ [STUDENT-CONTROLLER] Formulário enviado com sucesso:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ [STUDENT-CONTROLLER] Erro ao enviar formulário:', error);
+      throw error;
+    }
   }
 
   @Post('schedule')

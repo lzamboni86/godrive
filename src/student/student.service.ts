@@ -250,19 +250,30 @@ export class StudentService {
 
   async sendContactForm(contactForm: any) {
     try {
-      console.log(' Enviando formulário de contato:', contactForm);
+      console.log('📧 [STUDENT-SERVICE] Iniciando envio de formulário de contato');
+      console.log('📧 [STUDENT-SERVICE] Dados recebidos:', JSON.stringify(contactForm, null, 2));
+      
+      // Verificar se EmailService está disponível
+      if (!this.emailService) {
+        console.error('❌ [STUDENT-SERVICE] EmailService não está disponível');
+        throw new Error('Serviço de e-mail não disponível');
+      }
+      
+      console.log('📧 [STUDENT-SERVICE] Chamando EmailService.sendContactEmail...');
       
       // Enviar e-mail usando o EmailService
       const emailResult = await this.emailService.sendContactEmail(contactForm);
       
-      console.log(' Formulário enviado:', emailResult);
+      console.log('✅ [STUDENT-SERVICE] E-mail enviado com sucesso:', emailResult);
+      console.log('📧 [STUDENT-SERVICE] Resultado do envio:', JSON.stringify(emailResult, null, 2));
       
       return { 
         message: 'Formulário enviado com sucesso',
         emailSent: emailResult.success
       };
     } catch (error) {
-      console.error(' Erro ao enviar formulário de contato:', error);
+      console.error('❌ [STUDENT-SERVICE] Erro ao enviar formulário de contato:', error);
+      console.error('❌ [STUDENT-SERVICE] Stack trace:', error.stack);
       throw new Error('Não foi possível enviar o formulário. Tente novamente.');
     }
   }

@@ -6,30 +6,41 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
-    const host = process.env.MAIL_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
-    const port = Number(process.env.MAIL_PORT || process.env.EMAIL_PORT || 587);
-    const secureEnv = process.env.MAIL_SECURE || process.env.EMAIL_SECURE;
-    const secure = secureEnv ? secureEnv === 'true' : port === 465;
-    const user = process.env.MAIL_USER || process.env.EMAIL_USER || 'contato@godrivegroup.com.br';
-    const pass = process.env.MAIL_PASSWORD || process.env.EMAIL_PASS || 'sua_senha_aqui';
-
+    console.log('📧 [EMAIL] Inicializando EmailService...');
+    
+    // Verificar variáveis de ambiente
+    const mailUser = process.env.MAIL_USER || process.env.EMAIL_USER;
+    const mailPass = process.env.MAIL_PASS || process.env.EMAIL_PASS;
+    
+    console.log('📧 [EMAIL] Variáveis de ambiente:');
+    console.log('  - MAIL_USER:', mailUser ? '✅ Configurado' : '❌ Não configurado');
+    console.log('  - MAIL_PASS:', mailPass ? '✅ Configurado' : '❌ Não configurado');
+    
+    if (!mailUser || !mailPass) {
+      console.error('❌ [EMAIL] Credenciais de e-mail não configuradas!');
+    }
+    
     this.transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure,
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
       auth: {
-        user,
-        pass,
+        user: process.env.MAIL_USER || process.env.EMAIL_USER || 'contato@godrivegroup.com.br',
+        pass: process.env.MAIL_PASSWORD || process.env.EMAIL_PASS || 'sua_senha_aqui',
       },
     });
+    
+    console.log('📧 [EMAIL] Transporter configurado com sucesso');
   }
 
   async sendContactEmail(contactForm: any) {
     try {
-      console.log('📧 [EMAIL] Enviando e-mail de contato:', contactForm);
-
+      console.log('📧 [EMAIL] Iniciando envio de e-mail de contato');
+      console.log('📧 [EMAIL] Dados do formulário:', JSON.stringify(contactForm, null, 2));
+      
       const fromEmail = process.env.MAIL_USER || process.env.EMAIL_USER || 'contato@godrivegroup.com.br';
-
+      console.log('📧 [EMAIL] E-mail de origem:', fromEmail);
+      
       const mailOptions = {
         from: `"GoDrive SAC" <${fromEmail}>`,
         to: 'contato@godrivegroup.com.br',
@@ -95,8 +106,16 @@ export class EmailService {
         `,
       };
 
+      console.log('📧 [EMAIL] Preparando para enviar e-mail...');
+      console.log('📧 [EMAIL] Opções do e-mail:', JSON.stringify({
+        from: mailOptions.from,
+        to: mailOptions.to,
+        subject: mailOptions.subject
+      }, null, 2));
+      
       const info = await this.transporter.sendMail(mailOptions);
       console.log('✅ [EMAIL] E-mail enviado com sucesso:', info.messageId);
+      console.log('📧 [EMAIL] Resposta completa:', JSON.stringify(info, null, 2));
       
       return {
         success: true,
@@ -105,6 +124,7 @@ export class EmailService {
       };
     } catch (error) {
       console.error('❌ [EMAIL] Erro ao enviar e-mail:', error);
+      console.error('❌ [EMAIL] Stack trace completo:', error.stack);
       
       // Em caso de erro, ainda retorna sucesso para o frontend
       // mas registra o erro para investigação
