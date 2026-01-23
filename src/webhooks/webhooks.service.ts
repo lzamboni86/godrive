@@ -67,13 +67,14 @@ export class WebhooksService {
     if (!payment) {
       return;
     }
+    
     const status = payment?.status;
     const externalReference = payment?.external_reference;
 
     console.log(`💳 [WEBHOOK] Pagamento ${paymentId} - Status: ${status}`);
     console.log(`💳 [WEBHOOK] Referência externa: ${externalReference}`);
 
-    if (status !== 'approved' || !externalReference) {
+    if (!externalReference) {
       return;
     }
 
@@ -86,18 +87,57 @@ export class WebhooksService {
       return;
     }
 
-    await this.prisma.$transaction([
-      this.prisma.lesson.updateMany({
-        where: { id: { in: lessonIds } },
-        data: { status: 'WAITING_APPROVAL' },
-      }),
-      this.prisma.payment.updateMany({
-        where: { lessonId: { in: lessonIds } },
-        data: { status: 'PAID' },
-      }),
-    ]);
+    // Tratar diferentes status do pagamento
+    if (status === 'approved') {
+      // Pagamento aprovado - mover para waiting approval
+      await this.prisma.$transaction([
+        this.prisma.lesson.updateMany({
+          where: { id: { in: lessonIds } },
+          data: { status: 'WAITING_APPROVAL' },
+        }),
+        this.prisma.payment.updateMany({
+          where: { lessonId: { in: lessonIds } },
+          data: { 
+            status: 'PAID',
+            mercadoPagoStatus: status,
+            mercadoPagoPaymentId: String(paymentId)
+          },
+        }),
+      ]);
 
-    console.log(`✅ [WEBHOOK] Aulas atualizadas para WAITING_APPROVAL: ${lessonIds.join(', ')}`);
+      console.log(`✅ [WEBHOOK] Pagamento aprovado - Aulas atualizadas para WAITING_APPROVAL: ${lessonIds.join(', ')}`);
+      
+    } else if (status === 'rejected' || status === 'cancelled' || status === 'refunded') {
+      // Pagamento rejeitado/cancelado - cancelar as aulas
+      await this.prisma.$transaction([
+        this.prisma.lesson.updateMany({
+          where: { id: { in: lessonIds } },
+          data: { status: 'CANCELLED' },
+        }),
+        this.prisma.payment.updateMany({
+          where: { lessonId: { in: lessonIds } },
+          data: { 
+            status: 'FAILED' as any, // Usar status válido do enum
+            mercadoPagoStatus: status,
+            mercadoPagoPaymentId: String(paymentId)
+          },
+        }),
+      ]);
+
+      console.log(`❌ [WEBHOOK] Pagamento ${status} - Aulas canceladas: ${lessonIds.join(', ')}`);
+      
+    } else if (status === 'pending' || status === 'in_process') {
+      // Pagamento pendente - manter status atual mas atualizar info
+      await this.prisma.payment.updateMany({
+        where: { lessonId: { in: lessonIds } },
+        data: { 
+          mercadoPagoStatus: status,
+          mercadoPagoPaymentId: String(paymentId)
+        },
+      });
+
+      console.log(`⏳ [WEBHOOK] Pagamento ${status} - Mantendo aulas com status atual: ${lessonIds.join(', ')}`);
+    }
   }
 
   async handleMerchantOrder(body: any) {

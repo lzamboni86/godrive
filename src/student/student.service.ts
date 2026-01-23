@@ -107,6 +107,53 @@ export class StudentService {
     }));
   }
 
+  async getPendingPaymentLessons(studentId: string) {
+    const now = new Date();
+    const lessons = await this.prisma.lesson.findMany({
+      where: {
+        studentId,
+        lessonDate: {
+          gte: now
+        },
+        status: 'PENDING_PAYMENT'
+      },
+      include: {
+        instructor: {
+          include: {
+            user: true
+          }
+        },
+        payment: true
+      },
+      orderBy: {
+        lessonDate: 'asc'
+      }
+    });
+
+    return lessons.map(lesson => ({
+      id: lesson.id,
+      instructorId: lesson.instructorId,
+      studentId: lesson.studentId,
+      date: lesson.lessonDate.toISOString(),
+      time: lesson.lessonTime.toISOString(),
+      duration: 2,
+      status: lesson.status,
+      price: lesson.payment?.amount.toNumber() || 80,
+      location: 'Local a definir',
+      instructor: lesson.instructor?.user ? {
+        name: lesson.instructor.user.email.split('@')[0],
+        email: lesson.instructor.user.email
+      } : null,
+      payment: {
+        id: lesson.payment?.id,
+        status: lesson.payment?.status,
+        amount: lesson.payment?.amount.toNumber() || 80,
+        mercadoPagoStatus: lesson.payment?.mercadoPagoStatus,
+        mercadoPagoPaymentId: lesson.payment?.mercadoPagoPaymentId
+      }
+    }));
+  }
+
   async getUpcomingLessons(studentId: string) {
     const now = new Date();
     const lessons = await this.prisma.lesson.findMany({
@@ -116,7 +163,7 @@ export class StudentService {
           gte: now
         },
         status: {
-          in: ['PENDING_PAYMENT', 'WAITING_APPROVAL', 'CONFIRMED', 'REQUESTED']
+          in: ['WAITING_APPROVAL', 'CONFIRMED', 'REQUESTED'] // Removido PENDING_PAYMENT
         }
       },
       include: {
