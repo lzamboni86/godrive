@@ -1,5 +1,6 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus, BadRequestException, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, BadRequestException, Param, UseGuards, Req, Delete } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { RegisterStudentDto } from './dto/register-student.dto';
 import { RegisterInstructorDto } from './dto/register-instructor.dto';
@@ -56,6 +57,22 @@ export class AuthController {
     const result = await this.authService.getDashboard();
     console.log('🔍 [CONTROLLER] Result:', result);
     return result;
+  }
+
+  @Delete('delete-account')
+  @UseGuards(JwtAuthGuard)
+  async deleteAccount(@Req() req: any) {
+    const userId = req.user.sub || req.user.id;
+    console.log('🗑️ [AUTH-CONTROLLER] Solicitação de exclusão de conta:', userId);
+    
+    try {
+      const result = await this.authService.deleteAccount(userId);
+      console.log('✅ [AUTH-CONTROLLER] Conta excluída com sucesso:', userId);
+      return result;
+    } catch (error) {
+      console.error('❌ [AUTH-CONTROLLER] Erro ao excluir conta:', error);
+      throw error;
+    }
   }
 
   @Post('admin/instructors/:id/approve')

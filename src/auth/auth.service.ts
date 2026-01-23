@@ -335,4 +335,104 @@ export class AuthService {
       throw new UnauthorizedException('Token inválido ou expirado. Por favor, solicite uma nova recuperação de senha.');
     }
   }
+
+  async deleteAccount(userId: string) {
+    console.log('🗑️ [AUTH] Iniciando exclusão da conta:', userId);
+
+    try {
+      // Buscar usuário para verificar se existe
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        throw new Error('Usuário não encontrado');
+      }
+
+      console.log('🗑️ [AUTH] Usuário encontrado:', { id: user.id, email: user.email, role: user.role });
+
+      // Excluir dados relacionados baseado no tipo de usuário
+      if (user.role === 'INSTRUCTOR') {
+        console.log('🗑️ [AUTH] Excluindo dados de instrutor...');
+        
+        // Buscar instrutor relacionado
+        const instructor = await this.prisma.instructor.findFirst({
+          where: { userId }
+        });
+
+        if (instructor) {
+          // Excluir aulas do instrutor
+          await this.prisma.lesson.deleteMany({
+            where: { instructorId: instructor.id }
+          });
+
+          // Excluir avaliações recebidas
+          await this.prisma.review.deleteMany({
+            where: { instructorId: instructor.id }
+          });
+
+          // Excluir instrutor
+          await this.prisma.instructor.delete({
+            where: { id: instructor.id }
+          });
+        }
+      }
+
+      if (user.role === 'STUDENT') {
+        console.log('🗑️ [AUTH] Excluindo dados de aluno...');
+        
+        // Buscar aluno relacionado
+        const student = await this.prisma.student.findFirst({
+          where: { userId }
+        });
+
+        if (student) {
+          // Excluir aulas do aluno
+          await this.prisma.lesson.deleteMany({
+            where: { studentId: student.id }
+          });
+
+          // Excluir avaliações feitas
+          await this.prisma.review.deleteMany({
+            where: { studentId: student.id }
+          });
+
+          // Excluir aluno
+          await this.prisma.student.delete({
+            where: { id: student.id }
+          });
+        }
+      }
+
+      // Excluir tokens de reset de senha
+      await this.prisma.passwordReset.deleteMany({
+        where: { userId }
+      });
+
+      // Excluir requisições de exportação de dados
+      await this.prisma.dataExportRequest.deleteMany({
+        where: { userId }
+      });
+
+      // Excluir mensagens enviadas
+      await this.prisma.message.deleteMany({
+        where: { senderId: userId }
+      });
+
+      // Finalmente, excluir o usuário
+      await this.prisma.user.delete({
+        where: { id: userId }
+      });
+
+      console.log('✅ [AUTH] Conta excluída com sucesso:', userId);
+
+      return {
+        message: 'Conta excluída permanentemente',
+        deletedAt: new Date()
+      };
+    } catch (error) {
+      console.error('❌ [AUTH] Erro ao excluir conta:', error);
+      throw new Error('Não foi possível excluir sua conta. Tente novamente ou entre em contato com o suporte.');
+    }
+  }
 }
