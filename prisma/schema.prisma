@@ -55,6 +55,7 @@ enum LessonStatus {
   PAID
   WAITING_APPROVAL
   CONFIRMED
+  ADJUSTMENT_PENDING
   IN_PROGRESS
   COMPLETED
   EVALUATED
@@ -81,8 +82,10 @@ model User {
   name         String?
   phone        String?
   avatar       String?
+  expoPushToken String?
 
   instructor Instructor?
+  walletTransactions WalletTransaction[]
   passwordResets PasswordReset[]
   dataExportRequests DataExportRequest[]
 
@@ -163,6 +166,9 @@ model Lesson {
   lessonDate DateTime @db.Date
   lessonTime DateTime @db.Time(0)
 
+  proposedLessonDate DateTime? @db.Date
+  proposedLessonTime DateTime? @db.Time(0)
+
   payoutStatus PayoutStatus @default(PENDING)
   receiptUrl   String?
 
@@ -186,6 +192,12 @@ enum PaymentStatus {
   HELD
   RELEASED
   REFUNDED
+}
+
+enum WalletTransactionStatus {
+  LOCKED
+  AVAILABLE
+  USED
 }
 
 model Payment {
@@ -216,6 +228,28 @@ model Payment {
   @@index([status])
   @@index([mercadoPagoId])
   @@index([mercadoPagoPaymentId])
+}
+
+model WalletTransaction {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amount Decimal @db.Decimal(10, 2)
+  status WalletTransactionStatus @default(AVAILABLE)
+  bookingId String?
+
+  paymentMethod String? @default("MERCADO_PAGO")
+  transactionId String?
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([bookingId])
 }
 
 model Chat {

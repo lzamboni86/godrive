@@ -1,10 +1,17 @@
-import { Controller, Delete, Post, UseGuards, Req } from '@nestjs/common';
+import { Controller, Delete, Post, UseGuards, Req, Body } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/push-token')
+  async setPushToken(@Req() req: any, @Body() body: { token: string }) {
+    const userId = req.user.sub || req.user.id;
+    return this.usersService.setExpoPushToken(userId, body?.token);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Delete('me')

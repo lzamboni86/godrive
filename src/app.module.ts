@@ -17,9 +17,12 @@ import { FinanceModule } from './finance/finance.module';
 import { MailModule } from './mail/mail.module';
 import { UsersModule } from './users/users.module';
 import { UploadModule } from './upload/upload.module';
+import { RealtimeModule } from './realtime/realtime.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { WalletModule } from './wallet/wallet.module';
 
 @Module({
-  imports: [PrismaModule, PaymentsModule, AuthModule, LessonsModule, AdminModule, StudentModule, PaymentModule, InstructorModule, WebhooksModule, ChatModule, ReviewModule, FinanceModule, MailModule, UsersModule, UploadModule],
+  imports: [PrismaModule, PaymentsModule, AuthModule, LessonsModule, AdminModule, StudentModule, PaymentModule, InstructorModule, WebhooksModule, ChatModule, ReviewModule, FinanceModule, MailModule, UsersModule, UploadModule, RealtimeModule, NotificationsModule, WalletModule],
   controllers: [AppController, HealthController],
   providers: [AppService],
 })

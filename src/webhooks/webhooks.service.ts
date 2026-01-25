@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as https from 'https';
+import { RealtimeService } from '../realtime/realtime.service';
+import { ExpoPushService } from '../notifications/expo-push.service';
 
 @Injectable()
 export class WebhooksService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private realtimeService: RealtimeService,
+    private expoPushService: ExpoPushService,
+  ) {}
 
   private async getMercadoPagoPayment(paymentId: string, accessToken: string): Promise<any | null> {
     const url = `https://api.mercadopago.com/v1/payments/${paymentId}`;
@@ -70,9 +76,38 @@ export class WebhooksService {
     
     const status = payment?.status;
     const externalReference = payment?.external_reference;
+    const transactionAmount = payment?.transaction_amount;
 
     console.log(`💳 [WEBHOOK] Pagamento ${paymentId} - Status: ${status}`);
     console.log(`💳 [WEBHOOK] Referência externa: ${externalReference}`);
+
+    if (status === 'approved' && typeof externalReference === 'string' && externalReference.startsWith('wallet_credit_')) {
+      const parts = externalReference.split('_');
+      const userId = parts.length >= 3 ? parts[2] : null;
+      if (!userId) {
+        console.log('💳 [WEBHOOK] external_reference de carteira inválido:', externalReference);
+        return;
+      }
+
+      if (typeof transactionAmount !== 'number' || transactionAmount <= 0) {
+        console.log('💳 [WEBHOOK] transaction_amount inválido para recarga:', transactionAmount);
+        return;
+      }
+
+      await this.prisma.walletTransaction.create({
+        data: {
+          userId,
+          amount: transactionAmount as any,
+          status: 'AVAILABLE' as any,
+          paymentMethod: 'MERCADO_PAGO',
+          transactionId: String(paymentId),
+          description: `Recarga de créditos (Mercado Pago) - R$ ${transactionAmount}`,
+        },
+      });
+
+      console.log(`✅ [WEBHOOK] Recarga de créditos adicionada para userId=${userId} valor=${transactionAmount}`);
+      return;
+    }
 
     if (!externalReference) {
       return;
@@ -106,6 +141,41 @@ export class WebhooksService {
       ]);
 
       console.log(`✅ [WEBHOOK] Pagamento aprovado - Aulas atualizadas para WAITING_APPROVAL: ${lessonIds.join(', ')}`);
+
+      const lessons = await this.prisma.lesson.findMany({
+        where: { id: { in: lessonIds } },
+        include: {
+          instructor: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
+      const notifiedUserIds = new Set<string>();
+
+      for (const lesson of lessons) {
+        const instructorUserId = (lesson as any)?.instructor?.userId;
+        const pushToken = (lesson as any)?.instructor?.user?.expoPushToken;
+
+        if (!instructorUserId || notifiedUserIds.has(instructorUserId)) continue;
+        notifiedUserIds.add(instructorUserId);
+
+        this.realtimeService.emitToUser(instructorUserId, 'lesson_request_created', {
+          lessonIds,
+          type: 'WAITING_APPROVAL',
+        });
+
+        if (pushToken) {
+          await this.expoPushService.send(
+            pushToken,
+            'Nova solicitação de aula',
+            'Você tem uma nova solicitação aguardando aprovação.',
+            { screen: 'requests', lessonIds },
+          );
+        }
+      }
       
     } else if (status === 'rejected' || status === 'cancelled' || status === 'refunded') {
       // Pagamento rejeitado/cancelado - cancelar as aulas

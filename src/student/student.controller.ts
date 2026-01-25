@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { StudentService } from './student.service';
 import { ContactForm } from './dto/contact-form.dto';
 import { ScheduleRequestDto } from './dto/schedule-request.dto';
+import { LessonAdjustmentDto } from './dto/lesson-adjustment.dto';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -117,6 +118,17 @@ export class StudentController {
   @Post('schedule')
   async createScheduleRequest(@Body() scheduleRequest: ScheduleRequestDto) {
     return this.studentService.createScheduleRequest(scheduleRequest);
+  }
+
+  @Post('lessons/:lessonId/adjustment')
+  @UseGuards(JwtAuthGuard)
+  async requestLessonAdjustment(
+    @Req() req: any,
+    @Param('lessonId') lessonId: string,
+    @Body() dto: LessonAdjustmentDto,
+  ) {
+    const userId = req.user.sub || req.user.id;
+    return this.studentService.requestLessonAdjustment(userId, lessonId, dto);
   }
 
   @Post('upload-avatar')

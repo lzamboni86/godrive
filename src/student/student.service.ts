@@ -2,16 +2,87 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ContactForm } from './dto/contact-form.dto';
 import { ScheduleRequestDto } from './dto/schedule-request.dto';
+import { LessonAdjustmentDto } from './dto/lesson-adjustment.dto';
 import { MercadoPagoService } from '../payments/mercado-pago.service';
 import { EmailService } from '../email/email.service';
+import { WalletService } from '../wallet/wallet.service';
+import { RealtimeService } from '../realtime/realtime.service';
+import { ExpoPushService } from '../notifications/expo-push.service';
 
 @Injectable()
 export class StudentService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
-    private mercadoPagoService: MercadoPagoService
+    private mercadoPagoService: MercadoPagoService,
+    private walletService: WalletService,
+    private realtimeService: RealtimeService,
+    private expoPushService: ExpoPushService,
   ) {}
+
+  async requestLessonAdjustment(studentUserId: string, lessonId: string, dto: LessonAdjustmentDto) {
+    const lesson = await this.prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: {
+        instructor: {
+          include: { user: true },
+        },
+      },
+    });
+
+    if (!lesson) {
+      throw new Error('Aula não encontrada');
+    }
+
+    if (lesson.studentId !== studentUserId) {
+      throw new Error('Não autorizado');
+    }
+
+    if (lesson.status !== 'CONFIRMED') {
+      throw new Error('Aula não está confirmada para solicitar ajuste');
+    }
+
+    const scheduled = new Date(lesson.lessonDate);
+    scheduled.setHours(lesson.lessonTime.getHours(), lesson.lessonTime.getMinutes(), 0, 0);
+    const diffMs = scheduled.getTime() - Date.now();
+
+    if (diffMs <= 24 * 60 * 60 * 1000) {
+      throw new Error('Menos de 24 horas para aula');
+    }
+
+    const [hours, minutes] = dto.proposedTime.split(':');
+    const proposed = new Date(dto.proposedDate);
+    proposed.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+
+    const updated = await (this.prisma.lesson as any).update({
+      where: { id: lessonId },
+      data: {
+        status: 'ADJUSTMENT_PENDING' as any,
+        proposedLessonDate: proposed,
+        proposedLessonTime: proposed,
+      },
+    });
+
+    const instructorUserId = (lesson as any)?.instructor?.userId;
+    const pushToken = (lesson as any)?.instructor?.user?.expoPushToken;
+
+    if (instructorUserId) {
+      this.realtimeService.emitToUser(instructorUserId, 'lesson_adjustment_requested', {
+        lessonId: updated.id,
+      });
+    }
+
+    if (pushToken) {
+      await this.expoPushService.send(
+        pushToken,
+        'Solicitação de alteração',
+        'Um aluno solicitou alteração de horário. Confira e aprove ou recuse.',
+        { screen: 'requests', lessonId: updated.id },
+      );
+    }
+
+    return { message: 'Solicitação de ajuste enviada', lesson: updated };
+  }
 
   async getApprovedInstructors(filters?: {
     state?: string;
@@ -109,7 +180,7 @@ export class StudentService {
 
   async getPendingPaymentLessons(studentId: string) {
     const now = new Date();
-    const lessons = await this.prisma.lesson.findMany({
+    const lessons = await (this.prisma.lesson as any).findMany({
       where: {
         studentId,
         lessonDate: {
@@ -156,14 +227,14 @@ export class StudentService {
 
   async getUpcomingLessons(studentId: string) {
     const now = new Date();
-    const lessons = await this.prisma.lesson.findMany({
+    const lessons = await (this.prisma.lesson as any).findMany({
       where: {
         studentId,
         lessonDate: {
           gte: now
         },
         status: {
-          in: ['WAITING_APPROVAL', 'CONFIRMED', 'REQUESTED'] // Removido PENDING_PAYMENT
+          in: ['WAITING_APPROVAL', 'CONFIRMED', 'ADJUSTMENT_PENDING', 'REQUESTED'] // Removido PENDING_PAYMENT
         }
       },
       include: {
@@ -185,6 +256,8 @@ export class StudentService {
       studentId: lesson.studentId,
       date: lesson.lessonDate.toISOString(),
       time: lesson.lessonTime.toISOString(),
+      proposedDate: (lesson as any)?.proposedLessonDate ? (lesson as any).proposedLessonDate.toISOString() : null,
+      proposedTime: (lesson as any)?.proposedLessonTime ? (lesson as any).proposedLessonTime.toISOString() : null,
       duration: 2,
       status: lesson.status,
       price: lesson.payment?.amount.toNumber() || 80,
@@ -198,7 +271,7 @@ export class StudentService {
 
   async getPastLessons(studentId: string) {
     const now = new Date();
-    const lessons = await this.prisma.lesson.findMany({
+    const lessons = await (this.prisma.lesson as any).findMany({
       where: {
         studentId,
         OR: [
@@ -234,6 +307,8 @@ export class StudentService {
       studentId: lesson.studentId,
       date: lesson.lessonDate.toISOString(),
       time: lesson.lessonTime.toISOString(),
+      proposedDate: (lesson as any)?.proposedLessonDate ? (lesson as any).proposedLessonDate.toISOString() : null,
+      proposedTime: (lesson as any)?.proposedLessonTime ? (lesson as any).proposedLessonTime.toISOString() : null,
       duration: 2,
       status: lesson.status,
       price: lesson.payment?.amount.toNumber() || 80,
@@ -365,6 +440,10 @@ export class StudentService {
               lessonDate: lessonDate.toISOString(),
               status: scheduleRequest.status
             });
+
+            const isWallet = (scheduleRequest as any)?.paymentMethod === 'WALLET';
+            const lessonStatus = isWallet ? 'WAITING_APPROVAL' : 'PENDING_PAYMENT';
+            const paymentStatus = isWallet ? 'PAID' : 'PENDING';
             
             return this.prisma.lesson.create({
               data: {
@@ -372,11 +451,11 @@ export class StudentService {
                 instructorId: instructor.id, // ID correto do Instructor
                 lessonDate: lessonDate,
                 lessonTime: lessonDate,
-                status: 'PENDING_PAYMENT',
+                status: lessonStatus as any,
                 payment: {
                   create: {
                     amount: lesson.price,
-                    status: 'PENDING',
+                    status: paymentStatus as any,
                     currency: 'BRL'
                   }
                 }
@@ -391,6 +470,26 @@ export class StudentService {
           }
         })
       );
+
+      const paymentMethod = (scheduleRequest as any)?.paymentMethod;
+      if (paymentMethod === 'WALLET') {
+        for (const lesson of lessons) {
+          const amount = Number((lesson as any)?.payment?.amount ?? 0);
+          await this.walletService.useCredits(
+            scheduleRequest.studentId,
+            amount,
+            `Reserva (créditos) - Aula ${lesson.id}`,
+            lesson.id,
+          );
+        }
+
+        const lessonIds = lessons.map((l) => l.id);
+        return {
+          id: lessons[0].id,
+          lessonIds,
+          message: 'Solicitação criada com sucesso'
+        };
+      }
 
       // Criar preferência de pagamento real com Mercado Pago
       try {

@@ -5,6 +5,21 @@ import { PrismaService } from '../prisma/prisma.service';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
+  async setExpoPushToken(userId: string, token: string) {
+    if (!token) {
+      throw new BadRequestException('Token inválido');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        expoPushToken: token,
+      },
+    });
+
+    return { ok: true };
+  }
+
   async deleteAccount(userId: string, ipAddress?: string, userAgent?: string) {
     console.log('🔐 [USERS] Solicitação de exclusão de conta para usuário:', userId);
 

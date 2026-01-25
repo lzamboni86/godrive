@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsNumber, IsEnum } from 'class-validator';
+import { IsString, IsArray, IsNumber, IsEnum, IsOptional } from 'class-validator';
 
 export enum ScheduleStatus {
   PENDING_PAYMENT = 'PENDING_PAYMENT',
@@ -7,6 +7,11 @@ export enum ScheduleStatus {
   REJECTED = 'REJECTED',
   CANCELLED = 'CANCELLED',
   REQUESTED = 'REQUESTED'
+}
+
+export enum SchedulePaymentMethod {
+  MERCADO_PAGO = 'MERCADO_PAGO',
+  WALLET = 'WALLET',
 }
 
 export class ScheduleRequestDto {
@@ -29,4 +34,8 @@ export class ScheduleRequestDto {
 
   @IsEnum(ScheduleStatus)
   status: ScheduleStatus;
+
+  @IsOptional()
+  @IsEnum(SchedulePaymentMethod)
+  paymentMethod?: SchedulePaymentMethod;
 }

@@ -1,19 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeService } from '../realtime/realtime.service';
+import { WalletService } from '../wallet/wallet.service';
+import { ExpoPushService } from '../notifications/expo-push.service';
 
 @Injectable()
 export class InstructorService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private realtimeService: RealtimeService,
+    private walletService: WalletService,
+    private expoPushService: ExpoPushService,
+  ) {}
 
   async getLessonRequests(instructorId: string) {
     console.log(`🔍 Buscando solicitações para instrutor: ${instructorId}`);
     
     // Primeiro tenta buscar como instructorId
-    let requests = await this.prisma.lesson.findMany({
+    let requests: any[] = await (this.prisma.lesson as any).findMany({
       where: {
         instructorId,
         status: {
-          in: ['REQUESTED', 'WAITING_APPROVAL'] // Aulas aguardando aprovação
+          in: ['REQUESTED', 'WAITING_APPROVAL', 'ADJUSTMENT_PENDING'] // Aulas aguardando aprovação ou ajuste
         }
       },
       include: {
@@ -39,11 +47,11 @@ export class InstructorService {
       if (instructor) {
         console.log(`👨‍🏫 Instructor encontrado: ${instructor.id}, buscando solicitações...`);
         
-        requests = await this.prisma.lesson.findMany({
+        requests = await (this.prisma.lesson as any).findMany({
           where: {
             instructorId: instructor.id,
             status: {
-              in: ['REQUESTED', 'WAITING_APPROVAL']
+              in: ['REQUESTED', 'WAITING_APPROVAL', 'ADJUSTMENT_PENDING']
             }
           },
           include: {
@@ -60,7 +68,7 @@ export class InstructorService {
     console.log(`📋 Encontradas ${requests.length} solicitações para instrutor ${instructorId}`);
     
     // Formatar os dados para garantir consistência nos horários
-    return requests.map(request => {
+    return requests.map((request: any) => {
       // Garantir que o horário seja formatado corretamente
       const lessonTime = request.lessonTime.toISOString();
       
@@ -68,6 +76,8 @@ export class InstructorService {
         ...request,
         lessonDate: request.lessonDate.toISOString(),
         lessonTime: lessonTime,
+        proposedLessonDate: (request as any)?.proposedLessonDate ? (request as any).proposedLessonDate.toISOString() : null,
+        proposedLessonTime: (request as any)?.proposedLessonTime ? (request as any).proposedLessonTime.toISOString() : null,
         // Garantir que o student tenha os dados corretos
         student: request.student ? {
           ...request.student,
@@ -89,6 +99,8 @@ export class InstructorService {
       }
     });
 
+    await this.walletService.markBookingAsUsed(lesson.id);
+
     // Liberar pagamento
     if (lesson.payment) {
       await this.prisma.payment.update({
@@ -97,6 +109,18 @@ export class InstructorService {
           status: 'RELEASED',
           releasedAt: new Date()
         }
+      });
+    }
+
+    const instructor = await this.prisma.instructor.findUnique({
+      where: { id: lesson.instructorId },
+      select: { userId: true },
+    });
+
+    if (instructor?.userId) {
+      this.realtimeService.emitToUser(instructor.userId, 'lesson_request_updated', {
+        lessonId: lesson.id,
+        status: lesson.status,
       });
     }
 
@@ -112,6 +136,8 @@ export class InstructorService {
       }
     });
 
+    await this.walletService.releaseBooking(lesson.id);
+
     // Reembolsar pagamento
     if (lesson.payment) {
       await this.prisma.payment.update({
@@ -123,7 +149,116 @@ export class InstructorService {
       });
     }
 
-    return { message: 'Aula recusada e pagamento reembolsado', lesson };
+    const instructor = await this.prisma.instructor.findUnique({
+      where: { id: lesson.instructorId },
+      select: { userId: true },
+    });
+
+    if (instructor?.userId) {
+      this.realtimeService.emitToUser(instructor.userId, 'lesson_request_updated', {
+        lessonId: lesson.id,
+        status: lesson.status,
+      });
+    }
+
+    return { message: 'Aula recusada com sucesso', lesson };
+  }
+
+  async approveAdjustment(requestId: string) {
+    const lesson = await (this.prisma.lesson as any).findUnique({
+      where: { id: requestId },
+      include: { student: true },
+    });
+
+    if (!lesson) {
+      throw new Error('Aula não encontrada');
+    }
+
+    if (lesson.status !== 'ADJUSTMENT_PENDING') {
+      throw new Error('Aula não está aguardando ajuste');
+    }
+
+    const proposedLessonDate = (lesson as any)?.proposedLessonDate;
+    const proposedLessonTime = (lesson as any)?.proposedLessonTime;
+
+    if (!proposedLessonDate || !proposedLessonTime) {
+      throw new Error('Nenhuma data proposta encontrada');
+    }
+
+    const updated = await (this.prisma.lesson as any).update({
+      where: { id: requestId },
+      data: {
+        lessonDate: proposedLessonDate,
+        lessonTime: proposedLessonTime,
+        proposedLessonDate: null,
+        proposedLessonTime: null,
+        status: 'CONFIRMED',
+      },
+    });
+
+    const studentUserId = (lesson as any)?.studentId;
+    const pushToken = (lesson as any)?.student?.expoPushToken;
+
+    if (studentUserId) {
+      this.realtimeService.emitToUser(studentUserId, 'lesson_adjustment_approved', {
+        lessonId: updated.id,
+      });
+    }
+
+    if (pushToken) {
+      await this.expoPushService.send(
+        pushToken,
+        'Alteração aprovada',
+        'O instrutor aprovou a alteração do seu agendamento.',
+        { screen: 'agenda', lessonId: updated.id },
+      );
+    }
+
+    return { message: 'Alteração aprovada com sucesso', lesson: updated };
+  }
+
+  async rejectAdjustment(requestId: string) {
+    const lesson = await (this.prisma.lesson as any).findUnique({
+      where: { id: requestId },
+      include: { student: true },
+    });
+
+    if (!lesson) {
+      throw new Error('Aula não encontrada');
+    }
+
+    if (lesson.status !== 'ADJUSTMENT_PENDING') {
+      throw new Error('Aula não está aguardando ajuste');
+    }
+
+    const updated = await (this.prisma.lesson as any).update({
+      where: { id: requestId },
+      data: {
+        proposedLessonDate: null,
+        proposedLessonTime: null,
+        status: 'CONFIRMED',
+      },
+    });
+
+    const studentUserId = (lesson as any)?.studentId;
+    const pushToken = (lesson as any)?.student?.expoPushToken;
+
+    if (studentUserId) {
+      this.realtimeService.emitToUser(studentUserId, 'lesson_adjustment_rejected', {
+        lessonId: updated.id,
+      });
+    }
+
+    if (pushToken) {
+      await this.expoPushService.send(
+        pushToken,
+        'Alteração recusada',
+        'O instrutor não conseguiu aprovar a alteração para o horário solicitado.',
+        { screen: 'agenda', lessonId: updated.id },
+      );
+    }
+
+    return { message: 'Alteração recusada', lesson: updated };
   }
 
   async getPayments(instructorId: string) {
@@ -243,7 +378,7 @@ export class InstructorService {
     return schedule;
   }
 
-  async updateProfile(instructorId: string, data: { name?: string; email?: string; phone?: string; avatar?: string; hourlyRate?: number; pixKey?: string }) {
+  async updateProfile(instructorId: string, data: { name?: string; email?: string; phone?: string; avatar?: string; hourlyRate?: number; pixKey?: string; bio?: string }) {
     console.log('🔧 [INSTRUCTOR] Atualizando perfil:', instructorId, data);
 
     // Buscar o instrutor pelo userId
@@ -286,6 +421,10 @@ export class InstructorService {
 
     if (data.pixKey !== undefined) {
       updateData.pixKey = data.pixKey;
+    }
+
+    if (data.bio !== undefined) {
+      updateData.bio = data.bio;
     }
 
     // Atualizar o usuário se houver campos para atualizar

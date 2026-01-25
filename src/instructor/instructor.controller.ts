@@ -23,9 +23,19 @@ export class InstructorController {
     return this.instructorService.approveRequest(requestId);
   }
 
+  @Patch('requests/:id/approve-adjustment')
+  async approveAdjustment(@Param('id') requestId: string) {
+    return this.instructorService.approveAdjustment(requestId);
+  }
+
   @Patch('requests/:id/reject')
   async rejectRequest(@Param('id') requestId: string) {
     return this.instructorService.rejectRequest(requestId);
+  }
+
+  @Patch('requests/:id/reject-adjustment')
+  async rejectAdjustment(@Param('id') requestId: string) {
+    return this.instructorService.rejectAdjustment(requestId);
   }
 
   @Get(':id/payments')
