@@ -7,7 +7,6 @@ import { ScheduleRequestDto } from './dto/schedule-request.dto';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import type { Express } from 'express';
 
 @Controller('student')
 @UseGuards(JwtAuthGuard)
@@ -134,7 +133,7 @@ export class StudentController {
       },
     }),
   )
-  async uploadAvatar(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
+  async uploadAvatar(@UploadedFile() file: any, @Req() req: any) {
     const userId = req.user.sub || req.user.id;
 
     if (!file) {

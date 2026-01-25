@@ -19,7 +19,7 @@ export class UploadService {
     }
   }
 
-  async saveAvatar(file: Express.Multer.File, userId: string): Promise<{ url: string }> {
+  async saveAvatar(file: any, userId: string): Promise<{ url: string }> {
     if (!file) {
       throw new BadRequestException('Nenhum arquivo enviado.');
     }

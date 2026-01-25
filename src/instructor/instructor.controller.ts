@@ -62,7 +62,7 @@ export class InstructorController {
       },
     }),
   )
-  async uploadAvatar(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
+  async uploadAvatar(@UploadedFile() file: any, @Req() req: any) {
     const userId = req.user.sub || req.user.id;
 
     if (!file) {

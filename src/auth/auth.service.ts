@@ -381,27 +381,15 @@ export class AuthService {
       if (user.role === 'STUDENT') {
         console.log('🗑️ [AUTH] Excluindo dados de aluno...');
         
-        // Buscar aluno relacionado
-        const student = await this.prisma.student.findFirst({
-          where: { userId }
+        // Excluir aulas do aluno (usando diretamente o userId como studentId)
+        await this.prisma.lesson.deleteMany({
+          where: { studentId: userId }
         });
 
-        if (student) {
-          // Excluir aulas do aluno
-          await this.prisma.lesson.deleteMany({
-            where: { studentId: student.id }
-          });
-
-          // Excluir avaliações feitas
-          await this.prisma.review.deleteMany({
-            where: { studentId: student.id }
-          });
-
-          // Excluir aluno
-          await this.prisma.student.delete({
-            where: { id: student.id }
-          });
-        }
+        // Excluir avaliações feitas pelo aluno
+        await this.prisma.review.deleteMany({
+          where: { studentId: userId }
+        });
       }
 
       // Excluir tokens de reset de senha
