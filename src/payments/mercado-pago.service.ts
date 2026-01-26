@@ -101,9 +101,55 @@ export class MercadoPagoService {
 
       console.log('💳 [MP] Payload enviado ao Mercado Pago:', JSON.stringify(preferenceBody, null, 2));
 
-      const preference = await this.preferenceClient.create({
-        body: preferenceBody
-      });
+      const url = 'https://api.mercadopago.com/checkout/preferences';
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
+      const fetchFn: any = (globalThis as any).fetch;
+      if (!fetchFn) {
+        throw new Error('Runtime sem fetch(). Atualize o Node para >= 18 ou adicione um polyfill.');
+      }
+
+      let responseText = '';
+      let status = 0;
+
+      try {
+        const res = await fetchFn(url, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${mercadoPagoConfig.accessToken}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(preferenceBody),
+          signal: controller.signal,
+        });
+
+        status = res.status;
+        responseText = await res.text();
+
+        let parsed: any;
+        try {
+          parsed = responseText ? JSON.parse(responseText) : null;
+        } catch (parseError) {
+          console.error('❌ [MP] Resposta inválida (não-JSON) do Mercado Pago');
+          console.error('❌ [MP] Status:', status);
+          console.error('❌ [MP] Body (raw):', responseText || '<vazio>');
+          throw new Error(`Resposta inválida do Mercado Pago (status ${status})`);
+        }
+
+        if (!res.ok) {
+          console.error('❌ [MP] Erro HTTP do Mercado Pago');
+          console.error('❌ [MP] Status:', status);
+          console.error('❌ [MP] Body (json):', JSON.stringify(parsed, null, 2));
+          const message = parsed?.message || parsed?.error || 'Erro desconhecido';
+          throw new Error(`Mercado Pago HTTP ${status}: ${message}`);
+        }
+
+        var preference: any = parsed;
+      } finally {
+        clearTimeout(timeout);
+      }
 
       console.log('✅ [MP] ========== PREFERÊNCIA CRIADA ==========');
       console.log('✅ [MP] Preference ID:', preference.id);
