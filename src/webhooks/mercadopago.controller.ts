@@ -84,9 +84,15 @@ export class MercadoPagoController {
 
     // Validar assinatura do webhook (segurança)
     const dataId = body.data?.id ? String(body.data.id) : undefined;
-    const isValidSignature = this.validateWebhookSignature(signature, requestId, dataId);
+    
+    // Apenas validar assinatura se tiver dataId (webhook real)
+    // Webhooks de teste/configuração podem vir sem data.id
+    let isValidSignature = true;
+    if (dataId && mercadoPagoConfig.hasWebhookSecret) {
+      isValidSignature = this.validateWebhookSignature(signature, requestId, dataId);
+    }
 
-    if (!isValidSignature && mercadoPagoConfig.hasWebhookSecret) {
+    if (!isValidSignature) {
       console.error('❌ [WEBHOOK] Webhook rejeitado - assinatura inválida');
       throw new UnauthorizedException('Assinatura do webhook inválida');
     }
