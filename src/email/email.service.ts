@@ -6,27 +6,30 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
-    console.log('📧 [EMAIL] Inicializando EmailService...');
+    console.log(' [EMAIL] Inicializando EmailService...');
     
     // Verificar variáveis de ambiente
     const mailUser = process.env.MAIL_USER || process.env.EMAIL_USER;
-    const mailPass = process.env.MAIL_PASS || process.env.EMAIL_PASS;
+    const mailPass = process.env.MAIL_PASSWORD || process.env.MAIL_PASS || process.env.EMAIL_PASS;
     
-    console.log('📧 [EMAIL] Variáveis de ambiente:');
+    console.log(' [EMAIL] Variáveis de ambiente:');
     console.log('  - MAIL_USER:', mailUser ? '✅ Configurado' : '❌ Não configurado');
-    console.log('  - MAIL_PASS:', mailPass ? '✅ Configurado' : '❌ Não configurado');
+    console.log('  - MAIL_PASSWORD:', mailPass ? '✅ Configurado' : '❌ Não configurado');
     
     if (!mailUser || !mailPass) {
       console.error('❌ [EMAIL] Credenciais de e-mail não configuradas!');
     }
     
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+      host: process.env.MAIL_HOST || 'smtp.office365.com',
+      port: parseInt(process.env.MAIL_PORT || '587', 10),
+      secure: (process.env.MAIL_SECURE || 'false') === 'true',
       auth: {
-        user: process.env.MAIL_USER || process.env.EMAIL_USER || 'contato@godrivegroup.com.br',
-        pass: process.env.MAIL_PASSWORD || process.env.EMAIL_PASS || 'sua_senha_aqui',
+        user: mailUser,
+        pass: mailPass,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
     
