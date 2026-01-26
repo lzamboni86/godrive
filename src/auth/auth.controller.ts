@@ -29,6 +29,11 @@ export class AuthController {
     return this.authService.forgotPassword(body.email);
   }
 
+  @Post('validate-reset-token')
+  async validateResetToken(@Body() body: { token: string }) {
+    return this.authService.validatePasswordResetToken(body.token);
+  }
+
   @Post('reset-password')
   async resetPassword(@Body() body: { token: string; newPassword: string }) {
     return this.authService.resetPassword(body.token, body.newPassword);

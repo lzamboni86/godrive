@@ -306,6 +306,23 @@ export class AuthService {
     }
   }
 
+  async validatePasswordResetToken(token: string) {
+    console.log('📧 [AUTH] Validando token de reset de senha');
+
+    try {
+      const user = await this.mailService.validatePasswordResetToken(token);
+      console.log('📧 [AUTH] Token válido para usuário:', user.id);
+      
+      return {
+        valid: true,
+        message: 'Token válido'
+      };
+    } catch (error) {
+      console.error('📧 [AUTH] Token inválido:', error);
+      throw new UnauthorizedException('Token inválido ou expirado');
+    }
+  }
+
   async resetPassword(token: string, newPassword: string) {
     console.log('📧 [AUTH] Tentativa de reset de senha com token');
 
