@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { WalletService } from '../wallet/wallet.service';
 import { ExpoPushService } from '../notifications/expo-push.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class InstructorService {
@@ -11,6 +12,7 @@ export class InstructorService {
     private realtimeService: RealtimeService,
     private walletService: WalletService,
     private expoPushService: ExpoPushService,
+    private emailService: EmailService,
   ) {}
 
   async getLessonRequests(instructorId: string) {
@@ -458,13 +460,28 @@ export class InstructorService {
   }
 
   async sendContactForm(contactForm: any) {
-    console.log('📧 [INSTRUCTOR] Enviando formulário de contato:', contactForm);
-    
-    // Aqui você poderia salvar no banco, enviar e-mail, etc.
-    // Por enquanto, apenas simulamos o envio
-    return {
-      message: 'Formulário de contato enviado com sucesso',
-      contactForm
-    };
+    try {
+      console.log('📧 [INSTRUCTOR-SERVICE] Iniciando envio de formulário de contato');
+      console.log('📧 [INSTRUCTOR-SERVICE] Dados recebidos:', JSON.stringify(contactForm, null, 2));
+
+      if (!this.emailService) {
+        console.error('❌ [INSTRUCTOR-SERVICE] EmailService não está disponível');
+        throw new Error('Serviço de e-mail não disponível');
+      }
+
+      console.log('📧 [INSTRUCTOR-SERVICE] Chamando EmailService.sendContactEmail...');
+      const emailResult = await this.emailService.sendContactEmail(contactForm);
+
+      console.log('✅ [INSTRUCTOR-SERVICE] Resultado do envio:', JSON.stringify(emailResult, null, 2));
+
+      return {
+        message: 'Formulário enviado com sucesso',
+        emailSent: emailResult.success,
+      };
+    } catch (error) {
+      console.error('❌ [INSTRUCTOR-SERVICE] Erro ao enviar formulário de contato:', error);
+      console.error('❌ [INSTRUCTOR-SERVICE] Stack trace:', error.stack);
+      throw new Error('Não foi possível enviar o formulário. Tente novamente.');
+    }
   }
 }

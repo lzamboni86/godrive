@@ -9,8 +9,8 @@ export class MailService {
   constructor(private prisma: PrismaService) {
     this.transporter = createTransport({
       host: process.env.MAIL_HOST || 'smtp.office365.com',
-      port: parseInt(process.env.MAIL_PORT || '587'),
-      secure: false, // TLS
+      port: parseInt(process.env.MAIL_PORT || '587', 10),
+      secure: (process.env.MAIL_SECURE || 'false') === 'true',
       auth: {
         user: process.env.MAIL_USER || 'contato@godrivegroup.com.br',
         pass: process.env.MAIL_PASSWORD!,
