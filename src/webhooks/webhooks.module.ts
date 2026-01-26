@@ -4,9 +4,10 @@ import { WebhooksService } from './webhooks.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [PrismaModule, RealtimeModule, NotificationsModule],
+  imports: [PrismaModule, RealtimeModule, NotificationsModule, EmailModule],
   controllers: [MercadoPagoController],
   providers: [WebhooksService],
   exports: [WebhooksService],

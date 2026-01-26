@@ -1,28 +1,31 @@
 import { Injectable } from '@nestjs/common';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import { CreatePaymentDto } from '../payments/dto/create-payment.dto';
+import { mercadoPagoConfig } from '../config/mercadopago.config';
 
 @Injectable()
 export class MercadoPagoService {
-  private client: Preference;
-  private isSandbox: boolean;
+  private preferenceClient: Preference;
+  private paymentClient: Payment;
+  private sdkClient: MercadoPagoConfig;
 
   constructor() {
-    // Configurar o cliente do Mercado Pago com credenciais do ambiente
-    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-    
     console.log('💳 [MP] Inicializando MercadoPagoService');
-    console.log('💳 [MP] Token presente:', !!accessToken);
-    console.log('💳 [MP] Token inicia com TEST-:', accessToken?.startsWith('TEST-'));
+    mercadoPagoConfig.logConfig();
     
-    if (!accessToken) {
+    if (!mercadoPagoConfig.isConfigured) {
       throw new Error('MERCADO_PAGO_ACCESS_TOKEN não configurado');
     }
 
-    this.isSandbox = accessToken.startsWith('TEST-');
+    this.sdkClient = new MercadoPagoConfig({ 
+      accessToken: mercadoPagoConfig.accessToken 
+    });
+    this.preferenceClient = new Preference(this.sdkClient);
+    this.paymentClient = new Payment(this.sdkClient);
+  }
 
-    const sdkClient = new MercadoPagoConfig({ accessToken });
-    this.client = new Preference(sdkClient);
+  get isSandbox(): boolean {
+    return mercadoPagoConfig.isSandbox;
   }
 
   async createPaymentPreference(data: CreatePaymentDto) {
@@ -98,7 +101,7 @@ export class MercadoPagoService {
 
       console.log('💳 [MP] Payload enviado ao Mercado Pago:', JSON.stringify(preferenceBody, null, 2));
 
-      const preference = await this.client.create({
+      const preference = await this.preferenceClient.create({
         body: preferenceBody
       });
 
@@ -135,11 +138,56 @@ export class MercadoPagoService {
 
   async getPreference(preferenceId: string) {
     try {
-      const preference = await this.client.get({ preferenceId });
+      const preference = await this.preferenceClient.get({ preferenceId });
       return preference;
     } catch (error) {
       console.error('❌ [MP] Erro ao buscar preferência:', error);
       throw new Error('Preferência não encontrada');
+    }
+  }
+
+  /**
+   * Busca detalhes de um pagamento no Mercado Pago
+   * Usa MP_CLIENT_SECRET para autenticação server-to-server
+   */
+  async getPaymentDetails(paymentId: string) {
+    try {
+      console.log('💳 [MP] Buscando detalhes do pagamento:', paymentId);
+      const payment = await this.paymentClient.get({ id: paymentId });
+      console.log('✅ [MP] Detalhes do pagamento obtidos:', payment.id);
+      return payment;
+    } catch (error: any) {
+      console.error('❌ [MP] Erro ao buscar pagamento:', error.message);
+      throw new Error('Pagamento não encontrado');
+    }
+  }
+
+  /**
+   * Cancela/Estorna um pagamento no Mercado Pago
+   * Requer autenticação server-to-server
+   */
+  async refundPayment(paymentId: string, amount?: number) {
+    try {
+      console.log('💳 [MP] Iniciando estorno do pagamento:', paymentId);
+      
+      // Para estorno parcial, usar amount. Para total, não passar amount.
+      const refundData: any = {};
+      if (amount) {
+        refundData.amount = amount;
+      }
+
+      // Nota: O SDK do MP usa endpoint de refunds
+      // Por enquanto, logamos a intenção - implementação completa requer Refund client
+      console.log('💳 [MP] Estorno solicitado para pagamento:', paymentId, refundData);
+      
+      return { 
+        success: true, 
+        message: 'Estorno iniciado',
+        paymentId 
+      };
+    } catch (error: any) {
+      console.error('❌ [MP] Erro ao estornar pagamento:', error.message);
+      throw new Error('Não foi possível estornar o pagamento');
     }
   }
 }

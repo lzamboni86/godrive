@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as https from 'https';
 import { RealtimeService } from '../realtime/realtime.service';
 import { ExpoPushService } from '../notifications/expo-push.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class WebhooksService {
@@ -10,6 +11,7 @@ export class WebhooksService {
     private prisma: PrismaService,
     private realtimeService: RealtimeService,
     private expoPushService: ExpoPushService,
+    private emailService: EmailService,
   ) {}
 
   private async getMercadoPagoPayment(paymentId: string, accessToken: string): Promise<any | null> {
@@ -150,30 +152,63 @@ export class WebhooksService {
               user: true,
             },
           },
+          student: true,
+          payment: true,
         },
       });
 
       const notifiedUserIds = new Set<string>();
+      const emailedStudentIds = new Set<string>();
 
       for (const lesson of lessons) {
         const instructorUserId = (lesson as any)?.instructor?.userId;
         const pushToken = (lesson as any)?.instructor?.user?.expoPushToken;
+        const studentId = (lesson as any)?.studentId;
+        const student = (lesson as any)?.student;
+        const instructor = (lesson as any)?.instructor;
+        const paymentInfo = (lesson as any)?.payment;
 
-        if (!instructorUserId || notifiedUserIds.has(instructorUserId)) continue;
-        notifiedUserIds.add(instructorUserId);
+        // Notificar instrutor
+        if (instructorUserId && !notifiedUserIds.has(instructorUserId)) {
+          notifiedUserIds.add(instructorUserId);
 
-        this.realtimeService.emitToUser(instructorUserId, 'lesson_request_created', {
-          lessonIds,
-          type: 'WAITING_APPROVAL',
-        });
+          this.realtimeService.emitToUser(instructorUserId, 'lesson_request_created', {
+            lessonIds,
+            type: 'WAITING_APPROVAL',
+          });
 
-        if (pushToken) {
-          await this.expoPushService.send(
-            pushToken,
-            'Nova solicitação de aula',
-            'Você tem uma nova solicitação aguardando aprovação.',
-            { screen: 'requests', lessonIds },
-          );
+          if (pushToken) {
+            await this.expoPushService.send(
+              pushToken,
+              'Nova solicitação de aula',
+              'Você tem uma nova solicitação aguardando aprovação.',
+              { screen: 'requests', lessonIds },
+            );
+          }
+        }
+
+        // Enviar email de confirmação para o aluno (apenas uma vez por aluno)
+        if (studentId && student?.email && !emailedStudentIds.has(studentId)) {
+          emailedStudentIds.add(studentId);
+
+          const lessonDate = lesson.lessonDate 
+            ? new Date(lesson.lessonDate).toLocaleDateString('pt-BR')
+            : 'A definir';
+          const lessonTime = lesson.lessonTime
+            ? new Date(lesson.lessonTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            : 'A definir';
+
+          await this.emailService.sendBookingConfirmationEmail({
+            studentEmail: student.email,
+            studentName: student.name || 'Aluno',
+            instructorName: instructor?.name || instructor?.user?.name || 'Instrutor',
+            lessonDate,
+            lessonTime,
+            amount: paymentInfo?.amount ? Number(paymentInfo.amount) : Number(transactionAmount) || 0,
+            lessonCount: lessonIds.length,
+          });
+
+          console.log(`📧 [WEBHOOK] Email de confirmação enviado para: ${student.email}`);
         }
       }
       

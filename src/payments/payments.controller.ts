@@ -3,6 +3,7 @@ import { PaymentsService } from './payments.service';
 import { ReleasePaymentDto } from './dto/release-payment.dto';
 import { MercadoPagoService } from './mercado-pago.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
+import { mercadoPagoConfig } from '../config/mercadopago.config';
 
 @Controller('payments')
 export class PaymentsController {
@@ -11,6 +12,18 @@ export class PaymentsController {
     private readonly mercadoPagoService: MercadoPagoService,
     private readonly webhooksService: WebhooksService,
   ) {}
+
+  /**
+   * Endpoint para o frontend obter a chave pública do Mercado Pago
+   * Necessário para inicializar o SDK Bricks/Checkout no App
+   */
+  @Get('mercado-pago/config')
+  getMercadoPagoConfig() {
+    return {
+      publicKey: mercadoPagoConfig.publicKey,
+      isSandbox: mercadoPagoConfig.isSandbox,
+    };
+  }
 
   @Patch('release')
   @HttpCode(HttpStatus.OK)
