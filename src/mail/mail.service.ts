@@ -31,7 +31,10 @@ export class MailService {
   }
 
   async sendPasswordResetEmail(email: string, token: string): Promise<void> {
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    // Para desenvolvimento, usa o tunnel do Expo. Para produção, usa o scheme do app
+    const resetLink = process.env.NODE_ENV === 'development' 
+      ? `exp://192.168.15.3:8081/reset-password?token=${token}`
+      : `godrive://app/reset-password?token=${token}`;
     
     const mailOptions = {
       from: `"GoDrive" <${process.env.MAIL_USER || 'contato@godrivegroup.com.br'}>`,
