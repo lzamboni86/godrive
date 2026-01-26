@@ -7,6 +7,15 @@ export class MailService {
   private transporter: Transporter;
 
   constructor(private prisma: PrismaService) {
+    console.log('📧 [MAIL] Inicializando MailService...');
+    console.log('📧 [MAIL] Config SMTP:', {
+      host: process.env.MAIL_HOST || 'smtp.office365.com',
+      port: parseInt(process.env.MAIL_PORT || '587', 10),
+      secure: (process.env.MAIL_SECURE || 'false') === 'true',
+      user: process.env.MAIL_USER || 'contato@godrivegroup.com.br',
+      hasPassword: !!process.env.MAIL_PASSWORD
+    });
+
     this.transporter = createTransport({
       host: process.env.MAIL_HOST || 'smtp.office365.com',
       port: parseInt(process.env.MAIL_PORT || '587', 10),
@@ -67,10 +76,24 @@ export class MailService {
     };
 
     try {
-      await this.transporter.sendMail(mailOptions);
-      console.log('📧 [MAIL] E-mail de recuperação enviado para:', email);
+      console.log('📧 [MAIL] Enviando e-mail para:', email);
+      console.log('📧 [MAIL] Opções do e-mail:', {
+        from: mailOptions.from,
+        to: mailOptions.to,
+        subject: mailOptions.subject
+      });
+      
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('✅ [MAIL] E-mail de recuperação enviado com sucesso:', info.messageId);
+      console.log('📧 [MAIL] Resposta completa:', JSON.stringify(info, null, 2));
     } catch (error) {
-      console.error('📧 [MAIL] Erro ao enviar e-mail:', error);
+      console.error('❌ [MAIL] Erro ao enviar e-mail:', error);
+      console.error('❌ [MAIL] Detalhes do erro:', {
+        code: error.code,
+        message: error.message,
+        command: error.command,
+        response: error.response
+      });
       throw new Error('Não foi possível enviar o e-mail de recuperação');
     }
   }
