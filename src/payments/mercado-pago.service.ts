@@ -112,6 +112,8 @@ export class MercadoPagoService {
 
       let responseText = '';
       let status = 0;
+      let contentType: string | null = null;
+      let mpRequestId: string | null = null;
 
       try {
         const res = await fetchFn(url, {
@@ -120,12 +122,18 @@ export class MercadoPagoService {
             Authorization: `Bearer ${mercadoPagoConfig.accessToken}`,
             'Content-Type': 'application/json',
             Accept: 'application/json',
+            'User-Agent': 'GoDrive/1.0',
           },
           body: JSON.stringify(preferenceBody),
           signal: controller.signal,
         });
 
         status = res.status;
+        contentType = res.headers?.get?.('content-type') ?? null;
+        mpRequestId =
+          res.headers?.get?.('x-request-id') ??
+          res.headers?.get?.('x-mp-request-id') ??
+          null;
         responseText = await res.text();
 
         let parsed: any;
@@ -141,9 +149,22 @@ export class MercadoPagoService {
         if (!res.ok) {
           console.error('❌ [MP] Erro HTTP do Mercado Pago');
           console.error('❌ [MP] Status:', status);
+          console.error('❌ [MP] Content-Type:', contentType);
+          console.error('❌ [MP] MP Request ID:', mpRequestId);
+          console.error('❌ [MP] Modo Sandbox (token TEST-*):', this.isSandbox);
           console.error('❌ [MP] Body (json):', JSON.stringify(parsed, null, 2));
+          if (!responseText) {
+            console.error('❌ [MP] Body (raw): <vazio>');
+          }
           const message = parsed?.message || parsed?.error || 'Erro desconhecido';
-          throw new Error(`Mercado Pago HTTP ${status}: ${message}`);
+
+          if (status === 401 || status === 403) {
+            throw new Error(
+              `Mercado Pago HTTP ${status}: ${message}. Possíveis causas: MERCADO_PAGO_ACCESS_TOKEN inválido/expirado, token de produção/teste trocado, ou permissão insuficiente na conta. (mp_request_id=${mpRequestId || 'n/a'})`,
+            );
+          }
+
+          throw new Error(`Mercado Pago HTTP ${status}: ${message} (mp_request_id=${mpRequestId || 'n/a'})`);
         }
 
         var preference: any = parsed;
