@@ -14,12 +14,17 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
   // ADICIONE ESTA LINHA AQUI PARA LIBERAR O MOBILE:
   app.enableCors(); 
+
+  // Garantir parsing do body (necessário para webhooks do Mercado Pago)
+  app.use(express.json({ limit: '2mb' }));
+  app.use(express.urlencoded({ extended: true }));
 
   // Servir arquivos estáticos da pasta uploads
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {

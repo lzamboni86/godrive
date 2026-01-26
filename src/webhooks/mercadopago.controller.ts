@@ -89,15 +89,18 @@ export class MercadoPagoController {
     console.log('🔔 [WEBHOOK] Tipo:', body.type);
     console.log('🔔 [WEBHOOK] Action:', body.action);
     console.log('🔔 [WEBHOOK] Data ID (Body):', body.data?.id);
+    console.log('🔔 [WEBHOOK] ID (Body):', body.id);
     console.log('🔔 [WEBHOOK] Data ID (Query):', query['data.id']);
 
-    // Extrair ID do recurso seguindo padrão Mercado Pago
     let resourceId: string | undefined;
     let idSource: string;
 
     if (body.data?.id) {
       resourceId = String(body.data.id);
-      idSource = 'Body';
+      idSource = 'Body.data.id';
+    } else if (body.id) {
+      resourceId = String(body.id);
+      idSource = 'Body.id';
     } else if (query['data.id']) {
       resourceId = String(query['data.id']);
       idSource = 'Query';
