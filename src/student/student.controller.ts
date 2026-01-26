@@ -120,6 +120,14 @@ export class StudentController {
     return this.studentService.createScheduleRequest(scheduleRequest);
   }
 
+  @Put('schedule/:id/preference')
+  async updateSchedulePreference(
+    @Param('id') scheduleId: string,
+    @Body() body: { preferenceId: string }
+  ) {
+    return this.studentService.updateSchedulePreference(scheduleId, body.preferenceId);
+  }
+
   @Post('lessons/:lessonId/adjustment')
   @UseGuards(JwtAuthGuard)
   async requestLessonAdjustment(

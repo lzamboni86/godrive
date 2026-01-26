@@ -615,4 +615,27 @@ export class StudentService {
       throw error;
     }
   }
+
+  async updateSchedulePreference(scheduleId: string, preferenceId: string) {
+    try {
+      console.log('📦 [STUDENT] Atualizando preferenceId do pagamento:', scheduleId);
+      
+      // Atualizar o payment com o preferenceId (scheduleId é na verdade lessonId)
+      const updatedPayment = await this.prisma.payment.update({
+        where: { lessonId: scheduleId },
+        data: { mercadoPagoPreferenceId: preferenceId }
+      });
+
+      console.log('✅ [STUDENT] Pagamento atualizado com preferenceId:', updatedPayment.id);
+      
+      return {
+        message: 'Preference ID atualizado com sucesso',
+        paymentId: updatedPayment.id,
+        preferenceId: updatedPayment.mercadoPagoPreferenceId
+      };
+    } catch (error) {
+      console.error('❌ [STUDENT] Erro ao atualizar preferenceId:', error);
+      throw new Error('Não foi possível atualizar o preferenceId do pagamento');
+    }
+  }
 }
