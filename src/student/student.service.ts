@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, HttpException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ContactForm } from './dto/contact-form.dto';
 import { ScheduleRequestDto } from './dto/schedule-request.dto';
@@ -408,15 +408,18 @@ export class StudentService {
       // Buscar o instructorId correto a partir do userId com hourlyRate
       const instructor = await this.prisma.instructor.findFirst({
         where: {
-          userId: scheduleRequest.instructorId
+          OR: [
+            { userId: scheduleRequest.instructorId },
+            { id: scheduleRequest.instructorId },
+          ],
         },
         include: {
-          user: true
-        }
+          user: true,
+        },
       });
       
       if (!instructor) {
-        throw new Error('Instrutor não encontrado');
+        throw new BadRequestException('Instrutor não encontrado');
       }
       
       // Usar hourlyRate dinâmico do instrutor
@@ -551,8 +554,12 @@ export class StudentService {
         console.error('❌ Código do erro:', error.code);
         console.error('❌ Meta do erro:', error.meta);
       }
-      
-      throw new Error(`Não foi possível criar a solicitação: ${error.message}`);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(`Não foi possível criar a solicitação: ${error?.message || 'Erro interno'}`);
     }
   }
 
