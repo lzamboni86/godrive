@@ -20,10 +20,11 @@ import { UploadModule } from './upload/upload.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WalletModule } from './wallet/wallet.module';
+import { ReturnController } from './controllers/return.controller';
 
 @Module({
   imports: [PrismaModule, PaymentsModule, AuthModule, LessonsModule, AdminModule, StudentModule, PaymentModule, InstructorModule, WebhooksModule, ChatModule, ReviewModule, FinanceModule, MailModule, UsersModule, UploadModule, RealtimeModule, NotificationsModule, WalletModule],
-  controllers: [AppController, HealthController],
+  controllers: [AppController, HealthController, ReturnController],
   providers: [AppService],
 })
 export class AppModule {}

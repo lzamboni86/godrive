@@ -93,9 +93,9 @@ export class MercadoPagoService {
 
       if (returnBaseUrl) {
         preferenceBody.back_urls = {
-          success: `${returnBaseUrl}/schedule/success`,
-          failure: `${returnBaseUrl}/schedule/failure`,
-          pending: `${returnBaseUrl}/schedule/pending`,
+          success: `godrive://payment-success`,
+          failure: `godrive://payment-failure`,
+          pending: `godrive://payment-pending`,
         };
       }
 
