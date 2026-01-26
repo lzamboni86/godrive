@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Headers, UnauthorizedException, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { WebhooksService } from './webhooks.service';
 import { createHmac } from 'crypto';
 import { mercadoPagoConfig } from '../config/mercadopago.config';
@@ -43,11 +43,18 @@ export class MercadoPagoController {
       const ts = tsMatch.replace('ts=', '');
       const receivedHash = v1Match.replace('v1=', '');
 
-      // Montar o template de validação conforme documentação do MP
-      // Template: id:[data.id];request-id:[x-request-id];ts:[ts];
-      const manifest = `id:${dataId || ''};request-id:${requestId || ''};ts:${ts};`;
+      // Montar o manifesto exatamente conforme padrão Mercado Pago
+      // Formato: id:${resourceId};request-id:${requestId};ts:${timestamp};
+      const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
 
-      // Gerar HMAC-SHA256
+      console.log('🔍 [WEBHOOK] Detalhes da validação:');
+      console.log('  - Resource ID:', dataId);
+      console.log('  - Request ID:', requestId);
+      console.log('  - Timestamp:', ts);
+      console.log('  - Manifest:', manifest);
+      console.log('  - Webhook Secret configurado:', !!webhookSecret);
+
+      // Gerar HMAC-SHA256 com MP_WEBHOOK_SECRET
       const generatedHash = createHmac('sha256', webhookSecret)
         .update(manifest)
         .digest('hex');
@@ -76,20 +83,36 @@ export class MercadoPagoController {
     @Body() body: any,
     @Headers('x-signature') signature: string,
     @Headers('x-request-id') requestId: string,
+    @Query() query: any,
   ) {
     console.log('🔔 [WEBHOOK] Recebido webhook do Mercado Pago');
     console.log('🔔 [WEBHOOK] Tipo:', body.type);
     console.log('🔔 [WEBHOOK] Action:', body.action);
-    console.log('🔔 [WEBHOOK] Data ID:', body.data?.id);
+    console.log('🔔 [WEBHOOK] Data ID (Body):', body.data?.id);
+    console.log('🔔 [WEBHOOK] Data ID (Query):', query['data.id']);
+
+    // Extrair ID do recurso seguindo padrão Mercado Pago
+    let resourceId: string | undefined;
+    let idSource: string;
+
+    if (body.data?.id) {
+      resourceId = String(body.data.id);
+      idSource = 'Body';
+    } else if (query['data.id']) {
+      resourceId = String(query['data.id']);
+      idSource = 'Query';
+    } else {
+      resourceId = undefined;
+      idSource = 'Nenhum';
+    }
+
+    console.log('🔔 [WEBHOOK] ID extraído de:', idSource, '| Valor:', resourceId || 'VAZIO');
 
     // Validar assinatura do webhook (segurança)
-    const dataId = body.data?.id ? String(body.data.id) : undefined;
-    
-    // Apenas validar assinatura se tiver dataId (webhook real)
-    // Webhooks de teste/configuração podem vir sem data.id
+    // Apenas validar assinatura se tiver resourceId (webhook real)
     let isValidSignature = true;
-    if (dataId && mercadoPagoConfig.hasWebhookSecret) {
-      isValidSignature = this.validateWebhookSignature(signature, requestId, dataId);
+    if (resourceId && mercadoPagoConfig.hasWebhookSecret) {
+      isValidSignature = this.validateWebhookSignature(signature, requestId, resourceId);
     }
 
     if (!isValidSignature) {
