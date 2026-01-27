@@ -282,14 +282,32 @@ export class MercadoPagoService {
         throw new Error('Runtime sem fetch(). Atualize o Node para >= 18 ou adicione um polyfill.');
       }
 
+      // Calcula quantidade de aulas baseado no external_reference (lessonIds separados por vírgula)
+      const lessonIds = data.externalReference ? String(data.externalReference).split(',').filter(Boolean) : [];
+      const itemQuantity = lessonIds.length || 1;
+      const unitPrice = itemQuantity > 0 ? amountAsNumber / itemQuantity : amountAsNumber;
+
       const body: any = {
         transaction_amount: amountAsNumber,
         description: data.description || 'Pagamento GoDrive (PIX)',
         payment_method_id: 'pix',
         external_reference: data.externalReference,
         statement_descriptor: 'GoDrive Aulas',
+        notification_url: 'https://godrive-7j7x.onrender.com/webhooks/mercadopago',
         payer: {
           email: payerEmail || 'test_user@test.com',
+        },
+        additional_info: {
+          items: [
+            {
+              id: data.externalReference || randomUUID(),
+              title: `Aula de Direção - GoDrive`,
+              description: `${itemQuantity} ${itemQuantity === 1 ? 'aula' : 'aulas'} de direção veicular`,
+              category_id: 'educational',
+              quantity: itemQuantity,
+              unit_price: unitPrice,
+            },
+          ],
         },
       };
 
@@ -313,49 +331,24 @@ export class MercadoPagoService {
       }
 
       try {
-        const idempotencyKey = randomUUID();
-        const headers: Record<string, string> = {
-          Authorization: `Bearer ${mercadoPagoConfig.accessToken}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          'User-Agent': 'GoDrive/1.0',
-          'X-Idempotency-Key': idempotencyKey,
+        // Usando SDK oficial do Mercado Pago para maior pontuação
+        const paymentRequest = {
+          body: body,
+          requestOptions: {
+            idempotencyKey: randomUUID(),
+          },
         };
 
+        // Adiciona headers customizados se necessário
         if (data.deviceId) {
-          headers['X-meli-session-id'] = data.deviceId;
+          (paymentRequest.requestOptions as any).headers = {
+            'X-meli-session-id': data.deviceId,
+          };
         }
 
-        const res = await fetchFn(url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
-
-        const status = res.status;
-        const contentType = res.headers?.get?.('content-type') ?? null;
-        const mpRequestId =
-          res.headers?.get?.('x-request-id') ??
-          res.headers?.get?.('x-mp-request-id') ??
-          null;
-        const responseText = await res.text();
-
-        let parsed: any;
-        try {
-          parsed = responseText ? JSON.parse(responseText) : null;
-        } catch {
-          throw new Error(`Resposta inválida do Mercado Pago (status ${status})`);
-        }
-
-        if (!res.ok) {
-          const message = parsed?.message || parsed?.error || 'Erro desconhecido';
-          console.error('❌ [MP] PIX erro completo:', JSON.stringify(parsed, null, 2));
-          console.error('❌ [MP] PIX headers:', { status, contentType, mpRequestId, idempotencyKey });
-          throw new Error(`Mercado Pago HTTP ${status}: ${message} (mp_request_id=${mpRequestId || 'n/a'})`);
-        }
-
-        return parsed;
+        const payment = await this.paymentClient.create(paymentRequest);
+        console.log('✅ [MP] PIX criado com sucesso:', payment.id);
+        return payment;
       } finally {
         clearTimeout(timeout);
       }
@@ -451,6 +444,11 @@ export class MercadoPagoService {
         throw new Error('Runtime sem fetch(). Atualize o Node para >= 18 ou adicione um polyfill.');
       }
 
+      // Calcula quantidade de aulas baseado no external_reference (lessonIds separados por vírgula)
+      const lessonIds = data.externalReference ? String(data.externalReference).split(',').filter(Boolean) : [];
+      const itemQuantity = lessonIds.length || 1;
+      const unitPrice = itemQuantity > 0 ? amountAsNumber / itemQuantity : amountAsNumber;
+
       const body: any = {
         transaction_amount: amountAsNumber,
         token: data.token,
@@ -460,8 +458,21 @@ export class MercadoPagoService {
         issuer_id: issuerIdAsNumber,
         external_reference: data.externalReference,
         statement_descriptor: 'GoDrive Aulas',
+        notification_url: 'https://godrive-7j7x.onrender.com/webhooks/mercadopago',
         payer: {
           email: payerEmail || 'test_user@test.com',
+        },
+        additional_info: {
+          items: [
+            {
+              id: data.externalReference || randomUUID(),
+              title: `Aula de Direção - GoDrive`,
+              description: `${itemQuantity} ${itemQuantity === 1 ? 'aula' : 'aulas'} de direção veicular`,
+              category_id: 'educational',
+              quantity: itemQuantity,
+              unit_price: unitPrice,
+            },
+          ],
         },
       };
 
@@ -489,55 +500,24 @@ export class MercadoPagoService {
       let mpRequestId: string | null = null;
 
       try {
-        const idempotencyKey = randomUUID();
-        const headers: Record<string, string> = {
-          Authorization: `Bearer ${mercadoPagoConfig.accessToken}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          'User-Agent': 'GoDrive/1.0',
-          'X-Idempotency-Key': idempotencyKey,
+        // Usando SDK oficial do Mercado Pago para maior pontuação
+        const paymentRequest = {
+          body: body,
+          requestOptions: {
+            idempotencyKey: randomUUID(),
+          },
         };
 
+        // Adiciona headers customizados se necessário
         if (data.deviceId) {
-          headers['X-meli-session-id'] = data.deviceId;
+          (paymentRequest.requestOptions as any).headers = {
+            'X-meli-session-id': data.deviceId,
+          };
         }
 
-        const res = await fetchFn(url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
-
-        status = res.status;
-        const contentType = res.headers?.get?.('content-type') ?? null;
-        mpRequestId =
-          res.headers?.get?.('x-request-id') ??
-          res.headers?.get?.('x-mp-request-id') ??
-          null;
-
-        responseText = await res.text();
-
-        let parsed: any;
-        try {
-          parsed = responseText ? JSON.parse(responseText) : null;
-        } catch {
-          throw new Error(`Resposta inválida do Mercado Pago (status ${status})`);
-        }
-
-        if (!res.ok) {
-          const message = parsed?.message || parsed?.error || 'Erro desconhecido';
-          console.error('❌ [MP] Resposta de erro completa:', JSON.stringify(parsed, null, 2));
-          console.error('❌ [MP] Headers da resposta:', {
-            status,
-            contentType,
-            mpRequestId,
-            idempotencyKey,
-          });
-          throw new Error(`Mercado Pago HTTP ${status}: ${message} (mp_request_id=${mpRequestId || 'n/a'})`);
-        }
-
-        return parsed;
+        const payment = await this.paymentClient.create(paymentRequest);
+        console.log('✅ [MP] Pagamento com cartão criado com sucesso:', payment.id);
+        return payment;
       } finally {
         clearTimeout(timeout);
       }

@@ -144,8 +144,8 @@
         border: 1px solid var(--border);
         background: #ffffff;
         color: var(--text);
-        height: 50px;
-        padding: 12px 12px;
+        height: 48px;
+        padding: 0 12px;
         font-size: 16px;
         outline: none;
       }
@@ -161,23 +161,35 @@
       }
 
       .secure-field {
-        min-height: 50px;
+        height: 48px;
         display: flex;
         align-items: center;
         padding: 0;
         border: 1px solid var(--border);
         border-radius: 12px;
         background: #ffffff;
+        overflow: hidden;
       }
 
       .secure-field > div {
         width: 100%;
-        padding: 13px 12px;
+        height: 100%;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
       }
 
       .secure-field:focus-within {
         border-color: var(--primary);
         box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.14);
+      }
+
+      /* Força o iframe interno do Mercado Pago a respeitar o tamanho */
+      .secure-field > div > iframe {
+        height: 100% !important;
+        min-height: unset !important;
+        border: none !important;
+        background: transparent !important;
       }
 
       .meta {
