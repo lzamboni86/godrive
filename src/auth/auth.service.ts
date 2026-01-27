@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
@@ -6,6 +6,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterStudentDto } from './dto/register-student.dto';
 import { RegisterInstructorDto } from './dto/register-instructor.dto';
 import { MailService } from '../mail/mail.service';
+import { isValidCpf } from '../utils/cpf-validator';
 
 @Injectable()
 export class AuthService {
@@ -56,6 +57,14 @@ export class AuthService {
         name: user.name || (user.instructor?.id ? `Instrutor ${user.id.slice(-4)}` : `Usuário ${user.id.slice(-4)}`),
         phone: user.phone,
         role: user.role,
+        cpf: (user as any).cpf,
+        addressStreet: (user as any).addressStreet,
+        addressNumber: (user as any).addressNumber,
+        addressZipCode: (user as any).addressZipCode,
+        addressNeighborhood: (user as any).addressNeighborhood,
+        addressCity: (user as any).addressCity,
+        addressState: (user as any).addressState,
+        addressComplement: (user as any).addressComplement,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
       },
@@ -85,6 +94,21 @@ export class AuthService {
       throw new ConflictException('Email já cadastrado');
     }
 
+    // Valida CPF se fornecido
+    if (dto.cpf && !isValidCpf(dto.cpf)) {
+      throw new BadRequestException('CPF inválido');
+    }
+
+    // Verifica duplicidade de CPF
+    if (dto.cpf) {
+      const existingCpf = await this.prisma.user.findFirst({
+        where: { cpf: dto.cpf },
+      });
+      if (existingCpf) {
+        throw new ConflictException('CPF já cadastrado');
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     console.log('🔐 [AUTH] Password hashed');
 
@@ -95,6 +119,14 @@ export class AuthService {
         role: 'STUDENT',
         name: dto.name,
         phone: dto.phone,
+        cpf: dto.cpf || null,
+        addressStreet: dto.addressStreet || null,
+        addressNumber: dto.addressNumber || null,
+        addressZipCode: dto.addressZipCode || null,
+        addressNeighborhood: dto.addressNeighborhood || null,
+        addressCity: dto.addressCity || null,
+        addressState: dto.addressState || null,
+        addressComplement: dto.addressComplement || null,
       },
     });
 
@@ -112,6 +144,14 @@ export class AuthService {
         name: dto.name,
         phone: dto.phone,
         role: user.role,
+        cpf: (user as any).cpf,
+        addressStreet: (user as any).addressStreet,
+        addressNumber: (user as any).addressNumber,
+        addressZipCode: (user as any).addressZipCode,
+        addressNeighborhood: (user as any).addressNeighborhood,
+        addressCity: (user as any).addressCity,
+        addressState: (user as any).addressState,
+        addressComplement: (user as any).addressComplement,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
       },
@@ -128,6 +168,21 @@ export class AuthService {
       throw new ConflictException('Email já cadastrado');
     }
 
+    // Valida CPF se fornecido
+    if (dto.cpf && !isValidCpf(dto.cpf)) {
+      throw new BadRequestException('CPF inválido');
+    }
+
+    // Verifica duplicidade de CPF
+    if (dto.cpf) {
+      const existingCpf = await this.prisma.user.findFirst({
+        where: { cpf: dto.cpf },
+      });
+      if (existingCpf) {
+        throw new ConflictException('CPF já cadastrado');
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const user = await this.prisma.user.create({
@@ -137,6 +192,14 @@ export class AuthService {
         role: 'INSTRUCTOR',
         name: dto.name,
         phone: dto.phone,
+        cpf: dto.cpf || null,
+        addressStreet: dto.addressStreet || null,
+        addressNumber: dto.addressNumber || null,
+        addressZipCode: dto.addressZipCode || null,
+        addressNeighborhood: dto.addressNeighborhood || null,
+        addressCity: dto.addressCity || null,
+        addressState: dto.addressState || null,
+        addressComplement: dto.addressComplement || null,
       },
     });
 
@@ -174,6 +237,14 @@ export class AuthService {
         name: dto.name,
         phone: dto.phone,
         role: user.role,
+        cpf: (user as any).cpf,
+        addressStreet: (user as any).addressStreet,
+        addressNumber: (user as any).addressNumber,
+        addressZipCode: (user as any).addressZipCode,
+        addressNeighborhood: (user as any).addressNeighborhood,
+        addressCity: (user as any).addressCity,
+        addressState: (user as any).addressState,
+        addressComplement: (user as any).addressComplement,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
       },

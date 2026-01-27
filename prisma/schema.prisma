@@ -84,6 +84,15 @@ model User {
   avatar       String?
   expoPushToken String?
 
+  cpf                 String? @unique
+  addressStreet       String?
+  addressNumber       String?
+  addressZipCode      String?
+  addressNeighborhood String?
+  addressCity         String?
+  addressState        String?
+  addressComplement   String?
+
   instructor Instructor?
   walletTransactions WalletTransaction[]
   passwordResets PasswordReset[]

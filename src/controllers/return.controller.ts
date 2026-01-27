@@ -1,5 +1,5 @@
 import { Controller, Get, Res, Query } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { join } from 'path';
 
 @Controller('return')

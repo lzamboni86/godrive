@@ -494,57 +494,12 @@ export class StudentService {
         };
       }
 
-      // Criar preferência de pagamento real com Mercado Pago
-      try {
-        // Buscar dados do aluno para o pagamento
-        const student = await this.prisma.user.findUnique({
-          where: { id: scheduleRequest.studentId }
-        });
-
-        const lessonIds = lessons.map((l) => l.id);
-
-        // Usar hourlyRate do instrutor para todos os items
-        const paymentData = {
-          externalReference: lessonIds.join(','),
-          lessonIds,
-          payerEmail: student?.email || 'test_user@test.com',
-          payerName: student?.name || 'Aluno GoDrive',
-          payerDocument: '00000000000',
-          items: scheduleRequest.lessons.map((lesson, index) => ({
-            id: `lesson_${Date.now()}_${index}`,
-            title: 'Aula de Direção - GoDrive',
-            description: `Aula de direção - ${lesson.date} às ${lesson.time}`,
-            quantity: 1,
-            unit_price: Number(hourlyRate) // Usar hourlyRate dinâmico do instrutor
-          }))
-        };
-
-        console.log('💳 Payment Data preparado:', JSON.stringify(paymentData, null, 2));
-
-        const mercadoPagoResponse = await this.mercadoPagoService.createPaymentPreference(paymentData);
-
-        console.log('✅ Solicitação de agendamento criada:', {
-          scheduleId: lessons[0].id,
-          preferenceId: mercadoPagoResponse.preferenceId,
-          initPoint: mercadoPagoResponse.initPoint,
-          totalAmount: scheduleRequest.totalAmount,
-          lessonsCount: lessons.length
-        });
-
-        return {
-          id: lessons[0].id,
-          lessonIds,
-          preferenceId: mercadoPagoResponse.preferenceId,
-          initPoint: mercadoPagoResponse.initPoint,
-          sandboxInitPoint: mercadoPagoResponse.sandboxInitPoint,
-          isSandbox: (mercadoPagoResponse as any).isSandbox,
-          message: 'Solicitação criada com sucesso'
-        };
-
-      } catch (mpError) {
-        console.error('❌ Erro ao criar preferência Mercado Pago:', mpError);
-        throw mpError;
-      }
+      const lessonIds = lessons.map((l) => l.id);
+      return {
+        id: lessons[0].id,
+        lessonIds,
+        message: 'Solicitação criada com sucesso'
+      };
     } catch (error) {
       console.error('❌ Erro ao criar solicitação de agendamento:', error);
       console.error('❌ Stack trace:', error.stack);
@@ -563,7 +518,7 @@ export class StudentService {
     }
   }
 
-  async updateProfile(userId: string, updateData: { name: string; email: string; phone?: string; avatar?: string }) {
+  async updateProfile(userId: string, updateData: { name: string; email: string; phone?: string; avatar?: string; cpf?: string; addressStreet?: string; addressNumber?: string; addressZipCode?: string; addressNeighborhood?: string; addressCity?: string; addressState?: string; addressComplement?: string }) {
     try {
       console.log('👤 [STUDENT] Atualizando perfil do usuário:', userId);
       console.log('👤 [STUDENT] Dados recebidos:', updateData);
@@ -600,7 +555,15 @@ export class StudentService {
           name: updateData.name,
           email: updateData.email,
           phone: updateData.phone || null,
-          avatar: updateData.avatar || null
+          avatar: updateData.avatar || null,
+          cpf: updateData.cpf || null,
+          addressStreet: updateData.addressStreet || null,
+          addressNumber: updateData.addressNumber || null,
+          addressZipCode: updateData.addressZipCode || null,
+          addressNeighborhood: updateData.addressNeighborhood || null,
+          addressCity: updateData.addressCity || null,
+          addressState: updateData.addressState || null,
+          addressComplement: updateData.addressComplement || null,
         }
       });
 
@@ -613,7 +576,15 @@ export class StudentService {
           name: updatedUser.name,
           email: updatedUser.email,
           phone: updatedUser.phone,
-          avatar: updatedUser.avatar
+          avatar: updatedUser.avatar,
+          cpf: (updatedUser as any).cpf,
+          addressStreet: (updatedUser as any).addressStreet,
+          addressNumber: (updatedUser as any).addressNumber,
+          addressZipCode: (updatedUser as any).addressZipCode,
+          addressNeighborhood: (updatedUser as any).addressNeighborhood,
+          addressCity: (updatedUser as any).addressCity,
+          addressState: (updatedUser as any).addressState,
+          addressComplement: (updatedUser as any).addressComplement,
         }
       };
     } catch (error) {

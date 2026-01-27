@@ -6,7 +6,8 @@ export const mercadoPagoConfig = {
   webhookSecret: process.env.MP_WEBHOOK_SECRET || '',
   
   get isSandbox(): boolean {
-    return this.accessToken.startsWith('TEST-');
+    // Forçar produção: ignorar token TEST- e retornar sempre false
+    return false;
   },
   
   get isConfigured(): boolean {

@@ -314,7 +314,10 @@ export class InstructorService {
     const instructor = await this.prisma.instructor.findFirst({
       where: {
         userId: userId
-      }
+      },
+      include: {
+        user: true,
+      },
     });
 
     if (!instructor) {
@@ -415,6 +418,38 @@ export class InstructorService {
 
     if (data.avatar !== undefined) {
       userUpdateData.avatar = data.avatar;
+    }
+
+    if ((data as any).cpf !== undefined) {
+      userUpdateData.cpf = (data as any).cpf;
+    }
+
+    if ((data as any).addressStreet !== undefined) {
+      userUpdateData.addressStreet = (data as any).addressStreet;
+    }
+
+    if ((data as any).addressNumber !== undefined) {
+      userUpdateData.addressNumber = (data as any).addressNumber;
+    }
+
+    if ((data as any).addressZipCode !== undefined) {
+      userUpdateData.addressZipCode = (data as any).addressZipCode;
+    }
+
+    if ((data as any).addressNeighborhood !== undefined) {
+      userUpdateData.addressNeighborhood = (data as any).addressNeighborhood;
+    }
+
+    if ((data as any).addressCity !== undefined) {
+      userUpdateData.addressCity = (data as any).addressCity;
+    }
+
+    if ((data as any).addressState !== undefined) {
+      userUpdateData.addressState = (data as any).addressState;
+    }
+
+    if ((data as any).addressComplement !== undefined) {
+      userUpdateData.addressComplement = (data as any).addressComplement;
     }
 
     if (data.hourlyRate !== undefined) {

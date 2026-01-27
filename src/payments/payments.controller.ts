@@ -1,9 +1,13 @@
-import { Controller, Patch, Body, HttpCode, HttpStatus, BadRequestException, Get, Param, Post } from '@nestjs/common';
+import { Controller, Patch, Body, HttpCode, HttpStatus, BadRequestException, Get, Param, Post, Res, UseGuards, Req } from '@nestjs/common';
+import type { Response } from 'express';
+import { join } from 'path';
 import { PaymentsService } from './payments.service';
 import { ReleasePaymentDto } from './dto/release-payment.dto';
+import { ConfirmCardPaymentDto } from './dto/confirm-card-payment.dto';
 import { MercadoPagoService } from './mercado-pago.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { mercadoPagoConfig } from '../config/mercadopago.config';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('payments')
 export class PaymentsController {
@@ -23,6 +27,16 @@ export class PaymentsController {
       publicKey: mercadoPagoConfig.publicKey,
       isSandbox: mercadoPagoConfig.isSandbox,
     };
+  }
+
+  @Get('mercado-pago/secure-fields')
+  async serveSecureFieldsPage(@Req() req: any, @Res() res: Response) {
+    const amount = req?.query?.amount;
+    console.log(' [MP] Secure Fields HTML solicitado', { amount });
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(join(process.cwd(), 'public', 'mp-secure-fields.html'));
   }
 
   @Patch('release')
@@ -89,6 +103,26 @@ export class PaymentsController {
       };
     } catch (error) {
       throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('mercado-pago/card/confirm')
+  @UseGuards(JwtAuthGuard)
+  async confirmMercadoPagoCardPayment(@Req() req: any, @Body() body: ConfirmCardPaymentDto) {
+    try {
+      const userId = req?.user?.sub || req?.user?.id || req?.user?.userId;
+      const payment = await this.mercadoPagoService.createCardPayment(body, userId);
+
+      await this.webhooksService.handlePayment({
+        action: 'payment.created',
+        data: { id: String(payment?.id) },
+        type: 'payment',
+        userId: req?.user?.sub || req?.user?.id,
+      });
+
+      return { data: payment };
+    } catch (error) {
+      throw new BadRequestException((error as any).message);
     }
   }
 

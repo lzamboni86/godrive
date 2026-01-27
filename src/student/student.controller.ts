@@ -190,7 +190,7 @@ export class StudentController {
 
   @Put('profile')
   @UseGuards(JwtAuthGuard)
-  async updateProfile(@Req() req: any, @Body() updateData: { name: string; email: string; phone?: string; avatar?: string }) {
+  async updateProfile(@Req() req: any, @Body() updateData: { name: string; email: string; phone?: string; avatar?: string; cpf?: string; addressStreet?: string; addressNumber?: string; addressZipCode?: string; addressNeighborhood?: string; addressCity?: string; addressState?: string; addressComplement?: string }) {
     const userId = req.user.sub || req.user.id;
     return this.studentService.updateProfile(userId, updateData);
   }

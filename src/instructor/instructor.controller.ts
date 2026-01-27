@@ -108,7 +108,7 @@ export class InstructorController {
   }
 
   @Patch('profile')
-  async updateProfile(@Req() req: any, @Body() data: { name?: string; email?: string; phone?: string; avatar?: string; hourlyRate?: number; pixKey?: string }) {
+  async updateProfile(@Req() req: any, @Body() data: { name?: string; email?: string; phone?: string; avatar?: string; hourlyRate?: number; pixKey?: string; cpf?: string; addressStreet?: string; addressNumber?: string; addressZipCode?: string; addressNeighborhood?: string; addressCity?: string; addressState?: string; addressComplement?: string }) {
     const userId = req.user.sub || req.user.id;
     return this.instructorService.updateProfile(userId, data);
   }

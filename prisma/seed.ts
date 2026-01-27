@@ -7,16 +7,16 @@ async function main() {
   console.log('🌱 Iniciando seed do banco de dados...');
 
   // Criar senhas hasheadas
-  const adminPassword = await bcrypt.hash('admin123', 10);
-  const instructorPassword = await bcrypt.hash('instrutor123', 10);
-  const studentPassword = await bcrypt.hash('aluno123', 10);
+  const adminPassword = await bcrypt.hash('Teste3456', 10);
+  const instructorPassword = await bcrypt.hash('Teste987', 10);
+  const studentPassword = await bcrypt.hash('Teste123', 10);
 
   // Criar Admin
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@godrive.com' },
+    where: { email: 'admin@godrivegroup.com.br' },
     update: {},
     create: {
-      email: 'admin@godrive.com',
+      email: 'admin@godrivegroup.com.br',
       passwordHash: adminPassword,
       role: 'ADMIN',
       name: 'Admin GoDrive',
@@ -26,14 +26,22 @@ async function main() {
 
   // Criar Instrutor
   const instructorUser = await prisma.user.upsert({
-    where: { email: 'joao@godrive.com' },
+    where: { email: 'instrutor@gmail.com' },
     update: {},
     create: {
-      email: 'joao@godrive.com',
+      email: 'instrutor@gmail.com',
       passwordHash: instructorPassword,
       role: 'INSTRUCTOR',
-      name: 'João da Silva',
+      name: 'Instrutor GoDrive',
       phone: '11988887777',
+      cpf: '82614466972',
+      addressStreet: 'Rua Santa Catarina',
+      addressNumber: '199',
+      addressZipCode: '80000000',
+      addressNeighborhood: 'Água Verde',
+      addressCity: 'Curitiba',
+      addressState: 'PR',
+      addressComplement: null,
     },
   });
 
@@ -41,39 +49,41 @@ async function main() {
   const instructor = await prisma.instructor.upsert({
     where: { userId: instructorUser.id },
     update: {
-      gender: 'MALE',
-      status: 'APPROVED',
-      hourlyRate: 90.0,
+      gender: Gender.MALE,
+      status: InstructorStatus.APPROVED,
+      hourlyRate: 2.0,
       averageRating: 4.8,
       totalReviews: 25,
       state: 'PR',
       city: 'Curitiba',
       neighborhoodReside: 'Água Verde',
-      neighborhoodTeach: 'Água Verde',
+      neighborhoodTeach: 'Centro',
       completedLessonsCount: 156,
       rating: 4.8,
       bio: 'Instrutor experiente com mais de 5 anos de prática em formação de condutores. Especializado em condução defensiva e preparação para exames práticos. Paciente e dedicado, foco total no sucesso dos alunos.',
+      pixKey: 'instrutor@godrivegroup.com.br',
     },
     create: {
       userId: instructorUser.id,
-      gender: 'MALE',
+      gender: Gender.MALE,
       licenseCategories: ['B'],
-      status: 'APPROVED',
-      hourlyRate: 90.0,
+      status: InstructorStatus.APPROVED,
+      hourlyRate: 2.0,
       averageRating: 4.8,
       totalReviews: 25,
       state: 'PR',
       city: 'Curitiba',
       neighborhoodReside: 'Água Verde',
-      neighborhoodTeach: 'Água Verde',
+      neighborhoodTeach: 'Centro',
       completedLessonsCount: 156,
       rating: 4.8,
       bio: 'Instrutor experiente com mais de 5 anos de prática em formação de condutores. Especializado em condução defensiva e preparação para exames práticos. Paciente e dedicado, foco total no sucesso dos alunos.',
+      pixKey: 'instrutor@godrivegroup.com.br',
       vehicles: {
         create: {
-          type: VehicleType.MANUAL,
-          make: 'GM',
-          model: 'Onix',
+          type: VehicleType.COMBUSTION,
+          make: 'Ford',
+          model: 'Fiesta',
           year: 2023,
           plate: 'ABC1D23',
           transmission: Transmission.MANUAL,
@@ -89,24 +99,26 @@ async function main() {
 
   // Criar Aluno
   const student = await prisma.user.upsert({
-    where: { email: 'maria@godrive.com' },
+    where: { email: 'aluno@gmail.com' },
     update: {},
     create: {
-      email: 'maria@godrive.com',
+      email: 'aluno@gmail.com',
       passwordHash: studentPassword,
       role: 'STUDENT',
-      name: 'Maria Santos',
+      name: 'Aluno GoDrive',
       phone: '11977776666',
+      cpf: '05381760914',
     },
   });
 
   console.log('✅ Seed concluído com sucesso!');
   console.log('📧 Usuários criados:');
-  console.log('  Admin: admin@godrive.com / admin123');
-  console.log('  Instrutor: joao@godrive.com / instrutor123');
-  console.log('  Aluno: maria@godrive.com / aluno123');
-  console.log('🚗 Veículo: GM Onix 2023 (Manual, Combustão)');
-  console.log('📍 Instrutor atende em: Curitiba/PR, Água Verde');
+  console.log('  Admin: admin@godrivegroup.com.br / Teste3456');
+  console.log('  Instrutor: instrutor@gmail.com / Teste987 | CPF: 82614466972');
+  console.log('  Aluno: aluno@gmail.com / Teste123 | CPF: 05381760914');
+  console.log('🚗 Veículo: Ford Fiesta 2023 (Combustão, Manual)');
+  console.log('📍 Instrutor atende em: Curitiba/PR, Água Verde (residência) | Centro (atendimento)');
+  console.log('💡 PIX: instrutor@godrivegroup.com.br | Valor Aula: R$ 2,00');
   console.log('⭐ Avaliação: 4.8 (25 avaliações)');
   console.log('📊 Aulas realizadas: 156');
 }
