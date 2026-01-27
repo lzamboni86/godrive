@@ -212,8 +212,27 @@ export class WebhooksService {
         }
       }
       
-    } else if (status === 'rejected' || status === 'cancelled' || status === 'refunded') {
-      // Pagamento rejeitado/cancelado - cancelar as aulas
+    } else if (status === 'rejected' || status === 'cancelled') {
+      // Rejeitado/cancelado: não cancelar automaticamente (antifraude/retentativa)
+      // Mantém PENDING_PAYMENT e apenas registra status do Mercado Pago.
+      await this.prisma.$transaction([
+        this.prisma.lesson.updateMany({
+          where: { id: { in: lessonIds } },
+          data: { status: 'PENDING_PAYMENT' },
+        }),
+        this.prisma.payment.updateMany({
+          where: { lessonId: { in: lessonIds } },
+          data: {
+            status: 'PENDING',
+            mercadoPagoStatus: status,
+            mercadoPagoPaymentId: String(paymentId),
+          },
+        }),
+      ]);
+
+      console.log(`❌ [WEBHOOK] Pagamento ${status} - Mantendo aulas em PENDING_PAYMENT: ${lessonIds.join(', ')}`);
+
+    } else if (status === 'refunded') {
       await this.prisma.$transaction([
         this.prisma.lesson.updateMany({
           where: { id: { in: lessonIds } },
@@ -221,16 +240,16 @@ export class WebhooksService {
         }),
         this.prisma.payment.updateMany({
           where: { lessonId: { in: lessonIds } },
-          data: { 
-            status: 'FAILED' as any, // Usar status válido do enum
+          data: {
+            status: 'REFUNDED',
             mercadoPagoStatus: status,
-            mercadoPagoPaymentId: String(paymentId)
+            mercadoPagoPaymentId: String(paymentId),
           },
         }),
       ]);
 
-      console.log(`❌ [WEBHOOK] Pagamento ${status} - Aulas canceladas: ${lessonIds.join(', ')}`);
-      
+      console.log(`↩️ [WEBHOOK] Pagamento refunded - Aulas canceladas: ${lessonIds.join(', ')}`);
+
     } else if (status === 'pending' || status === 'in_process') {
       // Pagamento pendente - manter status atual mas atualizar info
       await this.prisma.payment.updateMany({
