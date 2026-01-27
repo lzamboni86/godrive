@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import { CreatePaymentDto } from '../payments/dto/create-payment.dto';
 import { ConfirmCardPaymentDto } from './dto/confirm-card-payment.dto';
+import { CreatePixPaymentDto } from './dto/create-pix-payment.dto';
 import { mercadoPagoConfig } from '../config/mercadopago.config';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -201,6 +202,162 @@ export class MercadoPagoService {
         console.error('❌ [MP] Response:', JSON.stringify(error.response, null, 2));
       }
       
+      throw new Error(`Erro Mercado Pago: ${error.message}`);
+    }
+  }
+
+  async createPixPayment(data: CreatePixPaymentDto, userId?: string) {
+    try {
+      const toOnlyDigits = (value?: string | null) => (value ? value.replace(/\D+/g, '') : undefined);
+
+      let payerEmail = data.payerEmail;
+      let payerDocumentNumber = data.payerDocumentNumber;
+      let payerDocumentType = data.payerDocumentType;
+      let payerPhone: string | undefined;
+      let payerAddress:
+        | {
+            zip_code?: string;
+            street_name?: string;
+            street_number?: string;
+            neighborhood?: string;
+            city?: string;
+            federal_unit?: string;
+            apartment?: string;
+          }
+        | undefined;
+
+      if (userId) {
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            email: true,
+            cpf: true,
+            phone: true,
+            addressZipCode: true,
+            addressStreet: true,
+            addressNumber: true,
+            addressNeighborhood: true,
+            addressCity: true,
+            addressState: true,
+            addressComplement: true,
+          },
+        });
+
+        if (user) {
+          payerEmail = payerEmail || user.email || undefined;
+          payerDocumentNumber = payerDocumentNumber || user.cpf || undefined;
+          payerDocumentType = payerDocumentType || (payerDocumentNumber ? 'CPF' : undefined);
+          payerPhone = payerPhone || user.phone || undefined;
+
+          const zipCode = toOnlyDigits(user.addressZipCode);
+          const streetNumber = toOnlyDigits(user.addressNumber);
+          if (!payerAddress && (zipCode || user.addressStreet || streetNumber)) {
+            payerAddress = {
+              zip_code: zipCode || undefined,
+              street_name: user.addressStreet || undefined,
+              street_number: streetNumber || undefined,
+              neighborhood: user.addressNeighborhood || undefined,
+              city: user.addressCity || undefined,
+              federal_unit: user.addressState || undefined,
+              apartment: user.addressComplement || undefined,
+            };
+          }
+        }
+      }
+
+      payerDocumentNumber = toOnlyDigits(payerDocumentNumber);
+
+      const amountAsNumber = Number((data as any).amount);
+      if (!Number.isFinite(amountAsNumber) || amountAsNumber <= 0) {
+        throw new Error(`amount inválido: ${String((data as any).amount)}`);
+      }
+
+      const url = 'https://api.mercadopago.com/v1/payments';
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+
+      const fetchFn: any = (globalThis as any).fetch;
+      if (!fetchFn) {
+        throw new Error('Runtime sem fetch(). Atualize o Node para >= 18 ou adicione um polyfill.');
+      }
+
+      const body: any = {
+        transaction_amount: amountAsNumber,
+        description: data.description || 'Pagamento GoDrive (PIX)',
+        payment_method_id: 'pix',
+        external_reference: data.externalReference,
+        statement_descriptor: 'GoDrive Aulas',
+        category_id: 'services',
+        payer: {
+          email: payerEmail || 'test_user@test.com',
+        },
+      };
+
+      if (payerDocumentNumber) {
+        body.payer.identification = {
+          type: payerDocumentType || 'CPF',
+          number: payerDocumentNumber,
+        };
+      }
+
+      if (payerAddress) {
+        body.payer.address = payerAddress;
+      }
+
+      const phoneDigits = toOnlyDigits(payerPhone);
+      if (phoneDigits && phoneDigits.length >= 10) {
+        body.payer.phone = {
+          area_code: phoneDigits.slice(0, 2),
+          number: phoneDigits.slice(2),
+        };
+      }
+
+      try {
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${mercadoPagoConfig.accessToken}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'User-Agent': 'GoDrive/1.0',
+        };
+
+        if (data.deviceId) {
+          headers['X-meli-session-id'] = data.deviceId;
+        }
+
+        const res = await fetchFn(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+
+        const status = res.status;
+        const contentType = res.headers?.get?.('content-type') ?? null;
+        const mpRequestId =
+          res.headers?.get?.('x-request-id') ??
+          res.headers?.get?.('x-mp-request-id') ??
+          null;
+        const responseText = await res.text();
+
+        let parsed: any;
+        try {
+          parsed = responseText ? JSON.parse(responseText) : null;
+        } catch {
+          throw new Error(`Resposta inválida do Mercado Pago (status ${status})`);
+        }
+
+        if (!res.ok) {
+          const message = parsed?.message || parsed?.error || 'Erro desconhecido';
+          console.error('❌ [MP] PIX erro completo:', JSON.stringify(parsed, null, 2));
+          console.error('❌ [MP] PIX headers:', { status, contentType, mpRequestId });
+          throw new Error(`Mercado Pago HTTP ${status}: ${message} (mp_request_id=${mpRequestId || 'n/a'})`);
+        }
+
+        return parsed;
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (error: any) {
       throw new Error(`Erro Mercado Pago: ${error.message}`);
     }
   }

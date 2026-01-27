@@ -4,6 +4,7 @@ import { join } from 'path';
 import { PaymentsService } from './payments.service';
 import { ReleasePaymentDto } from './dto/release-payment.dto';
 import { ConfirmCardPaymentDto } from './dto/confirm-card-payment.dto';
+import { CreatePixPaymentDto } from './dto/create-pix-payment.dto';
 import { MercadoPagoService } from './mercado-pago.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { mercadoPagoConfig } from '../config/mercadopago.config';
@@ -121,6 +122,33 @@ export class PaymentsController {
       });
 
       return { data: payment };
+    } catch (error) {
+      throw new BadRequestException((error as any).message);
+    }
+  }
+
+  @Post('mercado-pago/pix/create')
+  @UseGuards(JwtAuthGuard)
+  async createMercadoPagoPixPayment(@Req() req: any, @Body() body: CreatePixPaymentDto) {
+    try {
+      const userId = req?.user?.sub || req?.user?.id || req?.user?.userId;
+      const payment = await this.mercadoPagoService.createPixPayment(body, userId);
+
+      const qrCodeBase64 = payment?.point_of_interaction?.transaction_data?.qr_code_base64;
+      const qrCode = payment?.point_of_interaction?.transaction_data?.qr_code;
+
+      if (!qrCodeBase64 || !qrCode) {
+        throw new Error('Mercado Pago não retornou qr_code_base64/qr_code');
+      }
+
+      return {
+        data: {
+          id: payment?.id,
+          status: payment?.status,
+          qr_code_base64: qrCodeBase64,
+          qr_code: qrCode,
+        },
+      };
     } catch (error) {
       throw new BadRequestException((error as any).message);
     }

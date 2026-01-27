@@ -10,13 +10,13 @@
 
     <style>
       :root {
-        --bg: #0b1220;
-        --card: #111b2e;
-        --muted: #a6b0c3;
-        --text: #e8eefc;
-        --primary: #3b82f6;
+        --bg: #f8fafc;
+        --card: #ffffff;
+        --muted: #6b7280;
+        --text: #0f172a;
+        --primary: #10b981;
         --danger: #ef4444;
-        --border: rgba(255, 255, 255, 0.12);
+        --border: #e5e7eb;
       }
 
       * {
@@ -27,7 +27,7 @@
         margin: 0;
         font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji",
           "Segoe UI Emoji";
-        background: radial-gradient(1200px 600px at 20% 0%, #18284a 0%, var(--bg) 60%);
+        background: var(--bg);
         color: var(--text);
         padding: 20px;
       }
@@ -54,11 +54,10 @@
       }
 
       .card {
-        background: rgba(17, 27, 46, 0.85);
+        background: var(--card);
         border: 1px solid var(--border);
         border-radius: 14px;
         padding: 16px;
-        backdrop-filter: blur(8px);
       }
 
       .row {
@@ -82,14 +81,14 @@
         width: 100%;
         border-radius: 10px;
         border: 1px solid var(--border);
-        background: rgba(0, 0, 0, 0.12);
+        background: #ffffff;
         color: var(--text);
         padding: 12px 12px;
         outline: none;
       }
 
       input::placeholder {
-        color: rgba(230, 237, 252, 0.5);
+        color: #9ca3af;
       }
 
       .secure-field {
@@ -132,8 +131,9 @@
       }
 
       .btn-secondary {
-        background: rgba(255, 255, 255, 0.12);
-        color: white;
+        background: #ffffff;
+        color: var(--text);
+        border: 1px solid var(--border);
       }
 
       .error {
@@ -148,6 +148,55 @@
         white-space: pre-wrap;
       }
 
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin: 12px 0 14px;
+      }
+
+      .tab {
+        flex: 1;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #ffffff;
+        color: var(--text);
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      .tab.active {
+        border-color: rgba(16, 185, 129, 0.35);
+        background: rgba(16, 185, 129, 0.12);
+        color: #065f46;
+      }
+
+      .qr {
+        margin-top: 14px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        background: #ffffff;
+      }
+
+      .qr img {
+        width: 100%;
+        max-width: 280px;
+        display: block;
+        margin: 0 auto;
+      }
+
+      .copy {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #f8fafc;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 12px;
+        word-break: break-all;
+      }
+
       .loading {
         opacity: 0.7;
         pointer-events: none;
@@ -158,8 +207,13 @@
   <body>
     <div class="container">
       <div class="header">
-        <h1 class="title">Pagamento com cartão</h1>
-        <p class="subtitle">Dados do cartão são inseridos em campos seguros (PCI).</p>
+        <h1 class="title" id="title">Pagamento</h1>
+        <p class="subtitle" id="subtitle">Escolha como deseja pagar.</p>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" type="button" id="tabCard">Cartão de Crédito</button>
+        <button class="tab" type="button" id="tabPix">PIX</button>
       </div>
 
       <div class="card" id="card">
@@ -176,11 +230,10 @@
               <label>Ano</label>
               <div id="expirationYear" class="secure-field"></div>
             </div>
-            <div>
-              <label>CVV</label>
-              <div id="securityCode" class="secure-field"></div>
-            </div>
           </div>
+
+          <label>CVV</label>
+          <div id="securityCode" class="secure-field"></div>
 
           <label>Nome do titular</label>
           <input id="cardholderName" placeholder="Como no cartão" autocomplete="cc-name" />
@@ -221,13 +274,38 @@
           <div class="error" id="error"></div>
         </div>
       </div>
+
+      <div class="card" id="pix" style="display: none">
+        <div>
+          <div class="meta" id="pixMeta"></div>
+
+          <div class="actions" style="margin-top: 12px">
+            <button class="btn-primary" type="button" id="btnPix">Gerar QR Code</button>
+          </div>
+
+          <div class="qr" id="pixQr" style="display: none">
+            <img id="pixQrImg" alt="QR Code PIX" />
+            <div class="copy" id="pixCopy"></div>
+            <div class="actions" style="margin-top: 12px">
+              <button class="btn-secondary" type="button" id="btnCopy">Copiar código</button>
+            </div>
+          </div>
+
+          <div class="error" id="pixError"></div>
+        </div>
+      </div>
     </div>
 
     <script>
       const ui = {
         card: document.getElementById('card'),
+        pix: document.getElementById('pix'),
         error: document.getElementById('error'),
         meta: document.getElementById('meta'),
+        title: document.getElementById('title'),
+        subtitle: document.getElementById('subtitle'),
+        tabCard: document.getElementById('tabCard'),
+        tabPix: document.getElementById('tabPix'),
         cardholderName: document.getElementById('cardholderName'),
         identificationType: document.getElementById('identificationType'),
         identificationNumber: document.getElementById('identificationNumber'),
@@ -235,6 +313,13 @@
         installments: document.getElementById('installments'),
         btnPay: document.getElementById('btnPay'),
         btnCancel: document.getElementById('btnCancel'),
+        pixMeta: document.getElementById('pixMeta'),
+        pixError: document.getElementById('pixError'),
+        btnPix: document.getElementById('btnPix'),
+        pixQr: document.getElementById('pixQr'),
+        pixQrImg: document.getElementById('pixQrImg'),
+        pixCopy: document.getElementById('pixCopy'),
+        btnCopy: document.getElementById('btnCopy'),
       };
 
       const state = {
@@ -243,11 +328,13 @@
         mp: null,
         fields: null,
         amount: null,
+        externalReference: null,
         bin: null,
         paymentMethodId: null,
         issuerId: null,
         installments: null,
         deviceId: null,
+        activeTab: 'card',
       };
 
       function postMessage(payload) {
@@ -263,16 +350,25 @@
         ui.error.textContent = msg || '';
       }
 
+      function setPixError(msg) {
+        ui.pixError.style.display = msg ? 'block' : 'none';
+        ui.pixError.textContent = msg || '';
+      }
+
       function setLoading(isLoading) {
-        ui.card.classList.toggle('loading', Boolean(isLoading));
+        const panel = state.activeTab === 'pix' ? ui.pix : ui.card;
+        panel.classList.toggle('loading', Boolean(isLoading));
         ui.btnPay.disabled = Boolean(isLoading);
         ui.btnCancel.disabled = Boolean(isLoading);
+        ui.btnPix.disabled = Boolean(isLoading);
       }
 
       function readQueryParams() {
         const params = new URLSearchParams(window.location.search);
         const amount = params.get('amount');
         state.amount = amount ? String(amount) : null;
+        const externalReference = params.get('externalReference');
+        state.externalReference = externalReference ? String(externalReference) : null;
       }
 
       function updateMeta() {
@@ -282,6 +378,31 @@
         if (state.bin) parts.push(`BIN: ${state.bin}`);
         if (state.deviceId) parts.push(`Device ID: ${state.deviceId}`);
         ui.meta.textContent = parts.join('  •  ');
+
+        const pixParts = [];
+        if (state.amount) pixParts.push(`Valor: R$ ${state.amount}`);
+        if (state.deviceId) pixParts.push(`Device ID: ${state.deviceId}`);
+        ui.pixMeta.textContent = pixParts.join('  •  ');
+      }
+
+      function setTab(tab) {
+        state.activeTab = tab === 'pix' ? 'pix' : 'card';
+
+        ui.tabCard.classList.toggle('active', state.activeTab === 'card');
+        ui.tabPix.classList.toggle('active', state.activeTab === 'pix');
+
+        ui.card.style.display = state.activeTab === 'card' ? 'block' : 'none';
+        ui.pix.style.display = state.activeTab === 'pix' ? 'block' : 'none';
+
+        ui.title.textContent = state.activeTab === 'pix' ? 'Pagamento via PIX' : 'Pagamento com cartão';
+        ui.subtitle.textContent =
+          state.activeTab === 'pix'
+            ? 'Gere o QR Code e pague pelo app do seu banco.'
+            : 'Dados do cartão são inseridos em campos seguros (PCI).';
+
+        setError('');
+        setPixError('');
+        updateMeta();
       }
 
       function getDeviceId() {
@@ -366,6 +487,9 @@
       }
 
       function setupSelectListeners() {
+        ui.tabCard.addEventListener('click', () => setTab('card'));
+        ui.tabPix.addEventListener('click', () => setTab('pix'));
+
         ui.issuer.addEventListener('change', () => {
           state.issuerId = ui.issuer.value ? String(ui.issuer.value) : null;
         });
@@ -376,6 +500,39 @@
 
         ui.btnCancel.addEventListener('click', () => {
           postMessage({ type: 'MP_CANCEL' });
+        });
+
+        ui.btnCopy.addEventListener('click', async () => {
+          const value = String(ui.pixCopy.textContent || '');
+          if (!value) return;
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(value);
+            }
+          } catch (e) {}
+
+          postMessage({ type: 'MP_PIX_COPY', value });
+        });
+
+        ui.btnPix.addEventListener('click', () => {
+          setPixError('');
+          ui.pixQr.style.display = 'none';
+          setLoading(true);
+          try {
+            getDeviceId();
+            if (!state.amount) throw new Error('Valor inválido');
+
+            postMessage({
+              type: 'MP_PIX_CREATE',
+              amount: String(state.amount),
+              externalReference: state.externalReference ? String(state.externalReference) : '',
+              deviceId: state.deviceId || null,
+            });
+          } catch (err) {
+            const msg = err?.message || String(err);
+            setPixError(msg);
+            setLoading(false);
+          }
         });
 
         ui.btnPay.addEventListener('click', async () => {
@@ -503,6 +660,8 @@
 
           updateMeta();
 
+          setTab('card');
+
           const maxTries = 25;
           let tries = 0;
           const timer = setInterval(() => {
@@ -522,6 +681,35 @@
           setLoading(false);
         }
       }
+
+      window.__MP_HANDLE_PIX_RESULT = function (payloadJson) {
+        try {
+          const payload = payloadJson ? JSON.parse(payloadJson) : null;
+          const qrCodeBase64 = payload?.qrCodeBase64 || payload?.qr_code_base64 || null;
+          const qrCode = payload?.qrCode || payload?.qr_code || null;
+          if (!qrCodeBase64 || !qrCode) throw new Error('Resposta PIX inválida');
+
+          ui.pixQrImg.src = `data:image/png;base64,${qrCodeBase64}`;
+          ui.pixCopy.textContent = qrCode;
+          ui.pixQr.style.display = 'block';
+          setPixError('');
+        } catch (err) {
+          const msg = err?.message || String(err);
+          setPixError(msg);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      window.__MP_HANDLE_PIX_ERROR = function (payloadJson) {
+        try {
+          const payload = payloadJson ? JSON.parse(payloadJson) : null;
+          const msg = payload?.message || 'Erro ao gerar PIX';
+          setPixError(msg);
+        } finally {
+          setLoading(false);
+        }
+      };
 
       bootstrap();
     </script>
