@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
+import { randomUUID } from 'crypto';
 import { CreatePaymentDto } from '../payments/dto/create-payment.dto';
 import { ConfirmCardPaymentDto } from './dto/confirm-card-payment.dto';
 import { CreatePixPaymentDto } from './dto/create-pix-payment.dto';
@@ -312,11 +313,13 @@ export class MercadoPagoService {
       }
 
       try {
+        const idempotencyKey = randomUUID();
         const headers: Record<string, string> = {
           Authorization: `Bearer ${mercadoPagoConfig.accessToken}`,
           'Content-Type': 'application/json',
           Accept: 'application/json',
           'User-Agent': 'GoDrive/1.0',
+          'X-Idempotency-Key': idempotencyKey,
         };
 
         if (data.deviceId) {
@@ -348,7 +351,7 @@ export class MercadoPagoService {
         if (!res.ok) {
           const message = parsed?.message || parsed?.error || 'Erro desconhecido';
           console.error('❌ [MP] PIX erro completo:', JSON.stringify(parsed, null, 2));
-          console.error('❌ [MP] PIX headers:', { status, contentType, mpRequestId });
+          console.error('❌ [MP] PIX headers:', { status, contentType, mpRequestId, idempotencyKey });
           throw new Error(`Mercado Pago HTTP ${status}: ${message} (mp_request_id=${mpRequestId || 'n/a'})`);
         }
 
@@ -486,11 +489,13 @@ export class MercadoPagoService {
       let mpRequestId: string | null = null;
 
       try {
+        const idempotencyKey = randomUUID();
         const headers: Record<string, string> = {
           Authorization: `Bearer ${mercadoPagoConfig.accessToken}`,
           'Content-Type': 'application/json',
           Accept: 'application/json',
           'User-Agent': 'GoDrive/1.0',
+          'X-Idempotency-Key': idempotencyKey,
         };
 
         if (data.deviceId) {
@@ -527,6 +532,7 @@ export class MercadoPagoService {
             status,
             contentType,
             mpRequestId,
+            idempotencyKey,
           });
           throw new Error(`Mercado Pago HTTP ${status}: ${message} (mp_request_id=${mpRequestId || 'n/a'})`);
         }
