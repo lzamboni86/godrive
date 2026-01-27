@@ -339,13 +339,6 @@ export class MercadoPagoService {
           },
         };
 
-        // Adiciona headers customizados se necessário
-        if (data.deviceId) {
-          (paymentRequest.requestOptions as any).headers = {
-            'X-meli-session-id': data.deviceId,
-          };
-        }
-
         const payment = await this.paymentClient.create(paymentRequest);
         console.log('✅ [MP] PIX criado com sucesso:', payment.id);
         return payment;
@@ -353,6 +346,13 @@ export class MercadoPagoService {
         clearTimeout(timeout);
       }
     } catch (error: any) {
+      console.error('❌ [MP] Erro detalhado:', error);
+      if (error.cause) {
+        console.error('❌ [MP] Causa:', error.cause);
+      }
+      if (error.response) {
+        console.error('❌ [MP] Response:', error.response);
+      }
       throw new Error(`Erro Mercado Pago: ${error.message}`);
     }
   }
@@ -508,13 +508,6 @@ export class MercadoPagoService {
           },
         };
 
-        // Adiciona headers customizados se necessário
-        if (data.deviceId) {
-          (paymentRequest.requestOptions as any).headers = {
-            'X-meli-session-id': data.deviceId,
-          };
-        }
-
         const payment = await this.paymentClient.create(paymentRequest);
         console.log('✅ [MP] Pagamento com cartão criado com sucesso:', payment.id);
         return payment;
@@ -522,6 +515,13 @@ export class MercadoPagoService {
         clearTimeout(timeout);
       }
     } catch (error: any) {
+      console.error('❌ [MP] Erro detalhado:', error);
+      if (error.cause) {
+        console.error('❌ [MP] Causa:', error.cause);
+      }
+      if (error.response) {
+        console.error('❌ [MP] Response:', error.response);
+      }
       throw new Error(`Erro Mercado Pago: ${error.message}`);
     }
   }
