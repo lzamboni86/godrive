@@ -287,7 +287,6 @@ export class MercadoPagoService {
         payment_method_id: 'pix',
         external_reference: data.externalReference,
         statement_descriptor: 'GoDrive Aulas',
-        category_id: 'services',
         payer: {
           email: payerEmail || 'test_user@test.com',
         },
@@ -458,7 +457,6 @@ export class MercadoPagoService {
         issuer_id: issuerIdAsNumber,
         external_reference: data.externalReference,
         statement_descriptor: 'GoDrive Aulas',
-        category_id: 'services',
         payer: {
           email: payerEmail || 'test_user@test.com',
         },
